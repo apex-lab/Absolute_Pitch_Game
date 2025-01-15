@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-
 const Schema = mongoose.Schema;
 
 const enemyAppearanceSchema = new Schema({
@@ -37,6 +36,6 @@ const UserSchema = new Schema({
   levelsCompleted: [LevelScema]
 });
 
-const User = mongoose.model("users", UserSchema);
+const Users = mongoose.model("Users", UserSchema);
 
-export default User;
+export default Users;

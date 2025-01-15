@@ -4,6 +4,7 @@ import passport from "passport";
 import mongodb from "mongodb";
 import dotenv from "dotenv";
 import router from "./routes/api/user.js";
+import mongoose from "mongoose";
 
 dotenv.config();
 
@@ -19,17 +20,15 @@ app.use(passport.initialize());
 // Routes
 app.use("/api/users", router);
 
-
 import configurePassport from "./config/passport.js";
 
 configurePassport(passport);
-
 
 // Handle 404 for all other routes
 app.use("*", (req, res) => res.status(404).json({ error: "not found" }));
 
 // Database connection and server start
-MongoClient.connect(
+mongoose.connect(
     process.env.ABSOLUTE_PITCH_DB_URI,
     {
         ssl: true,

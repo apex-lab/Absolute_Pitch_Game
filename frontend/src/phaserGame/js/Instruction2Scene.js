@@ -15,10 +15,11 @@ export default class InstructionScene extends Phaser.Scene {
         background.setOrigin(0, 0);
         
         const instructions = [
-            "Thank you for participating in our experiment",
-            "You will now begin Phase 1. \n\n To rotate the ship use the mouse pad. \n\n To shoot press the W key.",
-            "The aliens will come from different ports on the screen \n\n and each alien corresponds to a unique note. \n\n Before the alein comes on screen a sequence of octaves consisting of \n\n the same note will play.",
-            "The faster that you shoot the alien the more points you will get \n\n ",
+           "Congratulations! You have completed the first phase",
+            "You will now begin Phase 2. \n\n",
+            "This phase will consist of new aliens \n\n Each alien will come from the same port as aliens from the previous phase \n\n",
+            "To shoot these aliens use the E key",
+            "Remember, the faster that you shoot the alien the more points you will get \n\n ",
             "Aliens will attack if not defeated in time.",
             "Good luck!"
         ];

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
+import axios from 'axios';
 
-//This module constructs the title screen for the game
-export default class TitleScene extends Phaser.Scene{
+export default class TitleScene extends Phaser.Scene {
     constructor() {
         super({ key: 'TitleScene' });
     }
@@ -12,29 +12,31 @@ export default class TitleScene extends Phaser.Scene{
     }
 
     create() {
-        //initializing title background
+        const scene = this;
+
         let background = this.add.sprite(0, 0, 'space');
         background.setOrigin(0, 0);
-        let title = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Absolute Pitch', {fontSize: '50px', fill: '#fff'});
-        title.setOrigin(0.5,0.5);
-        title.y= 400;
-        var new_game = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'New Game', {fontSize: '30px', fill: '#fff'}); 
-        new_game.setOrigin(0.5,0.5)
+
+        let title = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Absolute Pitch', { fontSize: '50px', fill: '#fff' });
+        title.setOrigin(0.5, 0.5);
+        title.y = 400;
+
+        let new_game = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'New Game', { fontSize: '30px', fill: '#fff' });
+        new_game.setOrigin(0.5, 0.5);
         new_game.y = 600;
-        new_game.setInteractive(); 
-        new_game.on('pointerdown', () => newGameForm()); 
-    
-        var continue_game = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Continue', {fontSize: '30px', fill: '#fff'}); 
+        new_game.setInteractive();
+        new_game.on('pointerdown', () => newGameForm());
+
+        let continue_game = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Continue', { fontSize: '30px', fill: '#fff' });
         continue_game.setOrigin(0.5, 0.5);
         continue_game.y = 700;
-        continue_game.setInteractive(); 
-        continue_game.on('pointerdown',() => continueGame()); 
-        
-        const scene = this;
-        
+        continue_game.setInteractive();
+        continue_game.on('pointerdown', () => continueGame());
+
         function newGameForm() {
             new_game.destroy();
             continue_game.destroy();
+
             const form = document.createElement("form");
             form.innerHTML = `
                 <h2>Create Account</h2>
@@ -43,84 +45,121 @@ export default class TitleScene extends Phaser.Scene{
                 
                 <label for="new-password">Password:</label>
                 <input type="password" id="new-password" name="password"><br><br>
+
+                <label for="confirm-password">Confirm Password:</label>
+                <input type="password" id="confirm-password" name="confirm-password"><br><br>
                 
                 <button type="submit">Create Account</button>
-                <button type="button" id="back-button">Back</button> <!-- Back button -->
+                <button type="button" id="back-button">Back</button>
             `;
 
-                form.style.position = 'absolute';
-                form.style.top = '50%';
-                form.style.left = '50%';
-                form.style.transform = 'translate(-50%, -50%)';
-                form.style.color = '#ffff';
-                form.style.fontFamily ='Courier';
-                form.style.fontSize = "25px";
-            document.body.appendChild(form);
-        
-            form.addEventListener('submit', (event) => {
-                event.preventDefault();
-                const username = document.getElementById('new-username').value;
-                const password = document.getElementById('new-password').value;
-                
-                // TODO: Add logic to save the new account information
-                console.log(`Creating account for ${username}`);
-           
-                // Remove form and start game
-                document.body.removeChild(form);
-                scene.scene.start('InstructionScene'); 
+            Object.assign(form.style, {
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                color: '#fff',
+                fontFamily: 'Courier',
+                fontSize: '25px'
             });
-            
+
+            document.body.appendChild(form);
+
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const name = document.getElementById('new-username').value;
+                const password = document.getElementById('new-password').value;
+                const password2 = document.getElementById('confirm-password').value;
+
+                if (!name || !password || !password2 || password !== password2) {
+                    alert('Please make sure all fields are filled and passwords match.');
+                    return;
+                }
+
+                try {
+                    const response = await axios.post('http://localhost:3000/api/users/register', {
+                        name,
+                        password,
+                        password2
+                    });
+
+                    console.log('Registration Success:', response.data);
+                    document.body.removeChild(form);
+                    scene.scene.start('InstructionScene');
+
+                } catch (error) {
+                    console.error('Registration Error:', error.response?.data || error.message);
+                    alert(`Error: ${error.response?.data?.message || 'Account creation failed'}`);
+                }
+            });
 
             document.getElementById('back-button').addEventListener('click', () => {
                 document.body.removeChild(form);
-                scene.scene.restart(); 
+                scene.scene.restart();
             });
-   
         }
-        
- 
-        function  continueGame() { 
+
+        function continueGame() {
             new_game.destroy();
             continue_game.destroy();
+
             const form = document.createElement("form");
             form.innerHTML = `
                 <label for="username">Username:</label>
                 <input type="text" id="username" name="username"><br><br>
-                <label style = 'background-color: rgba('0,0,0,0.5'); color: #fffff for="password">Password:</label>
+                <label for="password">Password:</label>
                 <input type="password" id="password" name="password"><br><br>
-                <button type="submit" style="display: block; margin: 0 auto; padding: 10px 20px; font-size: 16px; background-color: #333; color: #ffffff; border: none; border-radius: 5px; cursor: pointer;">Login</button>
-               <button type="button" id="back-button">Back</button> <!-- Back button -->
-               `;
+                <button type="submit">Login</button>
+                <button type="button" id="back-button">Back</button>
+            `;
 
-                form.style.position = 'absolute';
-                form.style.top = '50%';
-                form.style.left = '50%';
-                form.style.transform = 'translate(-50%, -50%)';
-                form.style.color = '#ffff';
-                form.style.fontFamily ='Courier';
-                form.style.fontSize = "30px";
-            
-                document.body.appendChild(form);
+            Object.assign(form.style, {
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                color: '#fff',
+                fontFamily: 'Courier',
+                fontSize: '25px'
+            });
 
-                form.addEventListener('submit', (event) => {
-                    event.preventDefault(); // Prevent the default form submission
-                
-                    // Placeholder for user verification needs to be replaced with an API call
-                    const username = document.getElementById('username').value;
-                    const password = document.getElementById('password').value;
-                
-                    // Dummy verification logic
-                    if (username === 'user' && password === 'pass') {
-                        document.body.removeChild(form);
+            document.body.appendChild(form);
 
-                    } else {
-                        alert('Invalid credentials. Please try again.');
-                    }
-                });
-                document.getElementById('back-button').addEventListener('click', () => {
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const name = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                if (!name || !password) {
+                    alert('Both fields are required.');
+                    return;
+                }
+
+                try {
+                    const response = await axios.post('http://localhost:3000/api/users/login', {
+                        name,
+                        password
+                    });
+
+                    console.log('Login Success:', response.data);
+                    localStorage.setItem('token', response.data.token);
+
                     document.body.removeChild(form);
-                    scene.scene.restart(); 
-                });
+                    const savedScene = 'InstructionScene';
+                    scene.scene.start(savedScene);
+                } catch (error) {
+                    console.error('Login Error:', error.response?.data || error.message);
+                    alert(`Login failed: ${error.response?.data?.message || 'Invalid credentials'}`);
+                    document.body.appendChild(form);
+                }
+            });
+
+            document.getElementById('back-button').addEventListener('click', () => {
+                document.body.removeChild(form);
+                scene.scene.restart();
+            });
         }
     }
 }

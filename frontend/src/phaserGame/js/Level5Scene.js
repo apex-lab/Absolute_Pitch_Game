@@ -20,9 +20,36 @@ export default class Level5Scene extends Phaser.Scene {
         preloadAssets(this);
     }
     create() {
+        this.levelStarted = false;
+
+        this.load.image('space', 'assets/space.png');
+        let background = this.add.sprite(0, 0, 'space');
+        background.setOrigin(0,0)
+
+        const levelText = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            'Level 5',
+            {
+                fontSize: '48px',
+                fill: '#ffffff',
+            }
+        ).setOrigin(0.5);
+
+        // After a delay, destroy the text and start the level
+        this.time.delayedCall(2000, () => {
+            levelText.destroy();
+            this.startLevel(); 
+        });
+    }
+
+    startLevel() {
+        this.levelStarted = true;
         createAssets(this);
+
     }
     update(time,delta) {
+        if (!this.levelStarted) return; 
         updateAssets(this,time, delta)
     }
     playerHit(bullet, player) {
@@ -109,7 +136,7 @@ export default class Level5Scene extends Phaser.Scene {
         if (this.enemyCount >= this.levelUpThreshold) {
             checkForNextLevel(this);
             this.time.delayedCall(3000, () => {
-                this.scene.start('Level6Scene'); 
+                this.scene.start('Instruction2Scene'); 
             }, [], this);
         }
     }

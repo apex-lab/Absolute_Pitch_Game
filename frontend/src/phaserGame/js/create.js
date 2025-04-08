@@ -2,7 +2,6 @@ import Bullet from './bullet';
 import Capture from './claw';
 import ScoreManager from './ScoreTracker';
 import Phaser from 'phaser';
-
 //Side Annotations 
     // Bottom Left - 1 
     // Middle Left - 2
@@ -70,6 +69,7 @@ export function createAssets(scene) {
         maxSize: 3
     });
     
+    scene.enemySpawnTimers = []; 
     // Set up keyboard input
     scene.wKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
     scene.eKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
@@ -294,5 +294,6 @@ export function createAssets(scene) {
             scene.sound.add('FSh_Scale5'),
             scene.sound.add('FSh_Scale6'),
             scene.sound.add('FSh_Scale7'),  
-        ]    
+        ]  
 }
+

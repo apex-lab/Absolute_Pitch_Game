@@ -14,15 +14,44 @@ export default class Level1Scene extends Phaser.Scene {
         this.fireRate = 200;
         this.canSnare = false; 
         this.canShoot = true; 
-        this.levelUpThreshold = 5
+        this.levelUpThreshold = 6
+        this.speed = 300
     }
     preload() {
         preloadAssets(this);
     }
+
     create() {
+        this.levelStarted = false;
+
+        this.load.image('space', 'assets/space.png');
+        let background = this.add.sprite(0, 0, 'space');
+        background.setOrigin(0,0)
+        // Display "Level 1" text centered on the screen
+        const levelText = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            'Level 1',
+            {
+                fontSize: '48px',
+                fill: '#ffffff',
+            }
+        ).setOrigin(0.5);
+
+        // After a delay, destroy the text and start the level
+        this.time.delayedCall(2000, () => {
+            levelText.destroy();
+            this.startLevel(); // Now start the level
+        });
+    }
+
+    startLevel() {
+        this.levelStarted = true;
         createAssets(this);
     }
+    
     update(time,delta) {
+        if (!this.levelStarted) return; 
         updateAssets(this,time, delta)
     }
     playerHit(bullet, player) {
@@ -52,7 +81,6 @@ export default class Level1Scene extends Phaser.Scene {
                 this.spawnEnemy(this.OrangeEnemy, 100, this.ShootDelay);
                 break;
             default:
-                console.log("Unexpected side value:", side);
                 break;
         }
         this.enemyCount++;
@@ -70,11 +98,10 @@ export default class Level1Scene extends Phaser.Scene {
                 this.OrangeEnemySounds[randIndex].play();
                 break;
              default: 
-                console.log("Unexpected enemy value")
                 break;
         }
 
-        spawnEnemy (this,enemy,speed,shootDelay);
+        spawnEnemy (this,enemy,this.speed,shootDelay);
     }
     
     //Note: this.enemies.length may be useful for the study to see how many attempts it takes for players to 
@@ -82,7 +109,7 @@ export default class Level1Scene extends Phaser.Scene {
     checkForNextLevel () {
         if (this.enemyCount >= this.levelUpThreshold) {
             checkForNextLevel(this);
-            this.time.delayedCall(3000, () => {
+            this.time.delayedCall(2000, () => {
                 this.scene.start('Level2Scene'); 
             }, [], this);
         }

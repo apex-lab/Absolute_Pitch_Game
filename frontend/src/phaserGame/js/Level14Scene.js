@@ -20,9 +20,36 @@ export default class Level14Scene extends Phaser.Scene {
         preloadAssets(this);
     }
     create() {
+        this.levelStarted = false;
+
+        this.load.image('space', 'assets/space.png');
+        let background = this.add.sprite(0, 0, 'space');
+        background.setOrigin(0,0)
+        
+        const levelText = this.add.text(
+            this.cameras.main.centerX,
+            this.cameras.main.centerY,
+            'Level 14',
+            {
+                fontSize: '48px',
+                fill: '#ffffff',
+            }
+        ).setOrigin(0.5);
+
+        // After a delay, destroy the text and start the level
+        this.time.delayedCall(2000, () => {
+            levelText.destroy();
+            this.startLevel(); 
+        });
+    }
+
+    startLevel() {
+        this.levelStarted = true;
         createAssets(this);
+
     }
     update(time,delta) {
+        if (!this.levelStarted) return; 
         updateAssets(this,time, delta)
     }
     playerHit(bullet, player) {

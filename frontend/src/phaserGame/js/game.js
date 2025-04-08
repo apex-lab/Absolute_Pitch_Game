@@ -22,17 +22,18 @@ import Level13Scene from './Level13Scene';
 import Level14Scene from './Level14Scene';
 import Level15Scene from './Level15Scene';
 import Instruction2Scene from './Instruction2Scene';
+import Instruction3Scene from './Instruction3Scene';
 
 export const config = {
 	type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
-    scene: [TitleScene, InstructionScene, Level1Scene, Level2Scene, Level3Scene, Level4Scene, Level5Scene,Instruction2Scene, Level6Scene, Level7Scene, Level8Scene, Level9Scene ,Level10Scene, Level11Scene, Level12Scene, Level13Scene, Level14Scene, Level15Scene],
+    scene: [TitleScene, InstructionScene, Level1Scene, Level2Scene, Level3Scene, Level4Scene, Level5Scene,Instruction2Scene, Level6Scene, Level7Scene, Level8Scene, Level9Scene ,Level10Scene, Level11Scene, Level12Scene, Level13Scene, Level14Scene, Level15Scene, Instruction3Scene],
     pixelArt: true,
     physics: {
         default: 'arcade',
         arcade: {
-            debug: false
+            debug: true
         }
     }
 };

@@ -14,6 +14,10 @@ const port = process.env.PORT || 8000;
 
 // Middleware
 app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3001', // or 3000 or wherever your frontend runs
+    credentials: true
+  }));
 app.use(express.json());
 app.use(passport.initialize());
 

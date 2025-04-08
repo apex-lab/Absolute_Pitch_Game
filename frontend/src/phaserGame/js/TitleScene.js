@@ -7,7 +7,6 @@ export default class TitleScene extends Phaser.Scene {
     }
 
     preload() {
-        console.log("Preloading image");
         this.load.image('space', '/assets/space.png');
     }
 

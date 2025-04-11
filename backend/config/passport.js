@@ -1,5 +1,4 @@
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
-import mongoose from "mongoose";
 import User from "../models/User.js";
 import keys from "../config/keys.js";
 

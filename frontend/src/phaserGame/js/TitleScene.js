@@ -143,11 +143,12 @@ export default class TitleScene extends Phaser.Scene {
                     });
 
                     console.log('Login Success:', response.data);
-                    localStorage.setItem('token', response.data.token);
-
                     document.body.removeChild(form);
-                    const savedScene = 'InstructionScene';
-                    scene.scene.start(savedScene);
+
+                    localStorage.setItem('authToken', response.data.token);
+                    localStorage.setItem('currentLevel', response.data.currentLevel);
+                    const level = response.data.currentLevel || 1;
+                    scene.scene.start(`Level${level}Scene`);
                 } catch (error) {
                     console.error('Login Error:', error.response?.data || error.message);
                     alert(`Login failed: ${error.response?.data?.message || 'Invalid credentials'}`);

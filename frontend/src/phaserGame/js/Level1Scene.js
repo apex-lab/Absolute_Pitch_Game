@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import axios from 'axios';
 import { preloadAssets } from './Preload';
 import { createAssets } from './create';
 import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel} from './gameutils.js'
@@ -8,14 +9,14 @@ export default class Level1Scene extends Phaser.Scene {
         super({ key: 'Level1Scene' });
         this.mouseX = 0;
         this.mouseY = 0;
-        this.enemyTimers = {};
-        this.enemyCount = 0; 
-        this.lastFireTime = 0;
         this.fireRate = 200;
         this.canSnare = false; 
         this.canShoot = true; 
-        this.levelUpThreshold = 6
-        this.speed = 300
+        this.lastFireTime = 0;
+        this.enemyTimers = {};
+        this.levelUpThreshold = 6;
+        this.speed = 300;
+        this.killData = [];
     }
     preload() {
         preloadAssets(this);
@@ -23,7 +24,6 @@ export default class Level1Scene extends Phaser.Scene {
 
     create() {
         this.levelStarted = false;
-
         this.load.image('space', 'assets/space.png');
         let background = this.add.sprite(0, 0, 'space');
         background.setOrigin(0,0)
@@ -47,6 +47,10 @@ export default class Level1Scene extends Phaser.Scene {
 
     startLevel() {
         this.levelStarted = true;
+        //this.levelStartTime = Date.now();
+        //this.killData = []; 
+        //this.lastFireTime = 0;
+        //this.enemyCount = 0; 
         createAssets(this);
     }
     
@@ -109,9 +113,34 @@ export default class Level1Scene extends Phaser.Scene {
     checkForNextLevel () {
         if (this.enemyCount >= this.levelUpThreshold) {
             checkForNextLevel(this);
-            this.time.delayedCall(2000, () => {
+            const completionTime = Math.floor((Date.now() - this.levelStartTime) / 1000);
+    
+            const token = localStorage.getItem("authToken");
+    
+            axios.post("http://localhost:3000/api/level/save", 
+                {
+                  levelNumber: 1,
+                  completionTime: completionTime,
+                  score: this.score,
+                  enemiesKilled: this.enemiesKilled,
+                  killData: this.killData
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`
+                  }
+                }
+              )
+              .then(response => {
+                console.log("Progress saved:", response.data);
+              })
+              .catch(err => {
+                console.error("Error saving progress:", err);
+              });
+          
+              this.time.delayedCall(2000, () => {
                 this.scene.start('Level2Scene'); 
-            }, [], this);
+              }, [], this);
+            }
         }
-    }
 }

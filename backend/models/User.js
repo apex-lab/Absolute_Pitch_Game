@@ -1,41 +1,29 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
-const enemyAppearanceSchema = new Schema({
-  enemyId: Number,
-  position: {
-    type: String,
-    enum: ['top-left', 'top-right', 'bottom-left', 'bottom-right', 'mid-left', 'mid-right'],
-    required: true
-  },
-  appearanceTime: Date,    // Timestamp when the enemy appears
-  reactionTime: {
-    type: Number,       // Time in milliseconds from the appearance to player's reaction
-    required: true
-  }
+// Track each enemy kill with its timestamp
+const killSchema = new Schema({
+  enemyId: { type: String, required: true },
+  killTime: { type: Date, required: true } // Use Date for easier timestamp handling
 });
 
-const LevelScema = new Schema({ 
-  levelID: Number, 
-  points: Number, 
-  completionTime: Number, 
-  Iterations: Number, 
-  enemyAppearances: [enemyAppearanceSchema]
- })
-
-const UserSchema = new Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  password: {
-    type: String,
-    required: true
-  },
-  levelsCompleted: [LevelScema]
+// One record per level completed
+const levelSchema = new Schema({
+  levelNumber: { type: Number, required: true },
+  completionTime: { type: Number, required: true }, // seconds
+  score: { type: Number, required: true },
+  enemiesKilled: { type: Number, required: true },
+  killData: [killSchema],
+  completedAt: { type: Date, default: Date.now }
 });
 
-const Users = mongoose.model("Users", UserSchema);
+// Full player schema
+const userSchema = new Schema({
+  name: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  currentLevel: { type: Number, default: 1 },
+  levelsCompleted: [levelSchema]
+});
 
+const Users = mongoose.model("Users", userSchema);
 export default Users;

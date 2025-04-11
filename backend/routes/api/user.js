@@ -6,7 +6,7 @@ import validateRegisterInput from "../../validation/register.js";
 import validateLoginInput from "../../validation/login.js";
 import User from "../../models/User.js"
 
-const router = express.Router();;
+const router = express.Router();
 // @route POST api/users/register
 // @desc Register user
 // @access Public
@@ -77,7 +77,8 @@ router.post("/login", (req, res) => {
             (err, token) => {
               res.json({
                 success: true,
-                token: "Bearer " + token
+                token: "Bearer " + token,
+                currentLevel: user.currentLevel 
               });
             }
           );

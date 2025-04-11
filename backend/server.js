@@ -2,20 +2,20 @@ import express from "express";
 import cors from "cors";
 import passport from "passport";
 import mongodb from "mongodb";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
 import router from "./routes/api/user.js";
-import mongoose from "mongoose";
+import progressRoutes from "./routes/api/level.js";
 
 dotenv.config();
 
 const app = express();
-const MongoClient = mongodb.MongoClient;
 const port = process.env.PORT || 8000;
 
 // Middleware
 app.use(cors());
 app.use(cors({
-    origin: 'http://localhost:3001', // or 3000 or wherever your frontend runs
+    origin: 'http://localhost:3001', 
     credentials: true
   }));
 app.use(express.json());
@@ -23,6 +23,7 @@ app.use(passport.initialize());
 
 // Routes
 app.use("/api/users", router);
+app.use("/api/level", progressRoutes);
 
 import configurePassport from "./config/passport.js";
 

@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 // Track each enemy kill with its timestamp
 const killSchema = new Schema({
   enemyId: { type: String, required: true },
-  killTime: { type: Date, required: true } // Use Date for easier timestamp handling
+  killTime: { type: Number, required: true } // Use Date for easier timestamp handling
 });
 
 // One record per level completed
@@ -14,14 +14,13 @@ const levelSchema = new Schema({
   score: { type: Number, required: true },
   enemiesKilled: { type: Number, required: true },
   killData: [killSchema],
-  completedAt: { type: Date, default: Date.now }
 });
 
 // Full player schema
 const userSchema = new Schema({
   name: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  currentLevel: { type: Number, default: 1 },
+  currentLevel: { type: Number, default: -1 },
   levelsCompleted: [levelSchema]
 });
 

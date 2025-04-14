@@ -147,7 +147,7 @@ export default class TitleScene extends Phaser.Scene {
 
                     localStorage.setItem('authToken', response.data.token);
                     localStorage.setItem('currentLevel', response.data.currentLevel);
-                    const level = response.data.currentLevel || 1;
+                    const level = response.data.currentLevel;
                     scene.scene.start(`Level${level}Scene`);
                 } catch (error) {
                     console.error('Login Error:', error.response?.data || error.message);

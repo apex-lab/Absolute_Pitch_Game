@@ -114,6 +114,11 @@ export function captureEnemy(scene,capture,bullet,enemy){
     } else { 
         capture.destroy();
     }
+    const timeSinceStart = Math.floor((Date.now() - scene.levelStartTime) / 1000);
+    scene.killData.push({
+    enemyId: enemy.texture.key,
+    killTime: timeSinceStart
+    });
         enemy.destroy(); // Destroying the enemy
         updateScoreDisplay(scene);
         scene.checkForNextLevel();

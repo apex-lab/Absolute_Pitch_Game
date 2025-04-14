@@ -15,6 +15,13 @@ router.post("/save", passport.authenticate('jwt', { session: false }), async (re
       const user = await User.findById(userId);
       if (!user) return res.status(404).json({ message: "User not found" });
   
+    //   const alreadyExists = user.levelsCompleted.some(
+    //     level => level.levelNumber === levelNumber
+    //   );
+    if (!user.levelsCompleted || user.levelsCompleted.length === 0) {
+        user.levelsCompleted = []; // Initialize levelsCompleted if it's empty or undefined
+      }
+      
       const alreadyExists = user.levelsCompleted.some(
         level => level.levelNumber === levelNumber
       );
@@ -26,7 +33,6 @@ router.post("/save", passport.authenticate('jwt', { session: false }), async (re
           score,
           enemiesKilled,
           killData,
-          completedAt: new Date()
         });
       }
   

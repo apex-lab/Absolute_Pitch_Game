@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import axios from 'axios';
 import { preloadAssets } from './Preload';
 import { createAssets } from './create';
-import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel} from './gameutils.js'
+import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel,updateScoreDisplay} from './gameutils.js'
+import ScoreManager from './ScoreTracker'
 
 export default class Level1Scene extends Phaser.Scene {
     constructor() {
@@ -47,10 +48,9 @@ export default class Level1Scene extends Phaser.Scene {
 
     startLevel() {
         this.levelStarted = true;
-        //this.levelStartTime = Date.now();
-        //this.killData = []; 
-        //this.lastFireTime = 0;
-        //this.enemyCount = 0; 
+        this.levelStartTime = Date.now();
+        this.killData = []; 
+        this.enemyCount = 0; 
         createAssets(this);
     }
     
@@ -111,34 +111,41 @@ export default class Level1Scene extends Phaser.Scene {
     //Note: this.enemies.length may be useful for the study to see how many attempts it takes for players to 
     //complete a given level. 
     checkForNextLevel () {
+        const score = ScoreManager.getScore();
         if (this.enemyCount >= this.levelUpThreshold) {
-            checkForNextLevel(this);
             const completionTime = Math.floor((Date.now() - this.levelStartTime) / 1000);
     
             const token = localStorage.getItem("authToken");
-    
+            console.log("sending level data:", {
+                levelNumber: 1,
+                completionTime: completionTime,
+                score: score,
+                enemiesKilled: this.enemyCount,
+                killData: this.killData
+              });
             axios.post("http://localhost:3000/api/level/save", 
                 {
                   levelNumber: 1,
                   completionTime: completionTime,
-                  score: this.score,
-                  enemiesKilled: this.enemiesKilled,
+                  score: score,
+                  enemiesKilled: this.enemyCount,
                   killData: this.killData
                 },
                 {
                   headers: {
-                    Authorization: `Bearer ${token}`
+                    Authorization: `${token}`
                   }
                 }
               )
               .then(response => {
+                checkForNextLevel(this);
                 console.log("Progress saved:", response.data);
               })
               .catch(err => {
                 console.error("Error saving progress:", err);
               });
           
-              this.time.delayedCall(2000, () => {
+            this.time.delayedCall(2000, () => {
                 this.scene.start('Level2Scene'); 
               }, [], this);
             }

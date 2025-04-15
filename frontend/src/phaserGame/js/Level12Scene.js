@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
+import axios from 'axios';
 import { preloadAssets } from './Preload.js';
 import { createAssets } from './create.js';
 import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel} from './gameutils.js'
+import ScoreManager from './ScoreTracker'
 
 export default class Level12Scene extends Phaser.Scene {
     constructor() {

@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
+import axios from 'axios';
 import { preloadAssets } from './Preload.js';
 import { createAssets } from './create.js';
 import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel} from './gameutils.js'
+import ScoreManager from './ScoreTracker'
 
 
 export default class Level4Scene extends Phaser.Scene {
@@ -63,7 +65,7 @@ export default class Level4Scene extends Phaser.Scene {
         enemyShoot(this,enemy)
     }
     onEvent() {
-        this.checkForNextLevel(); // Check if conditions to move to the next level are met
+        this.checkForNextLevel(); 
         
         let side = Phaser.Math.Between(1, 5);
         let new_side;
@@ -122,7 +124,7 @@ export default class Level4Scene extends Phaser.Scene {
     }
 
     checkForNextLevel() {
-        if (this.enemyCount >= this.levelUpThreshold) {
+        if (this.score >= this.levelUpThreshold) {
             checkForNextLevel(this);
             this.time.delayedCall(3000, () => {
                 this.scene.start('Level5Scene'); 

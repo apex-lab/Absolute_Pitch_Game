@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
+import axios from 'axios';
 import { preloadAssets } from './Preload.js';
 import { createAssets } from './create.js';
 import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel} from './gameutils.js'
+import ScoreManager from './ScoreTracker'
 
 //We will add the capturing mechanism on this level
 export default class Level3Scene extends Phaser.Scene {
@@ -116,7 +118,7 @@ export default class Level3Scene extends Phaser.Scene {
     }
 
     checkForNextLevel() {
-        if (this.enemyCount >= this.levelUpThreshold) {
+        if (this.score >= this.levelUpThreshold) {
             checkForNextLevel(this);
             this.time.delayedCall(3000, () => {
                 this.scene.start('Level4Scene'); 

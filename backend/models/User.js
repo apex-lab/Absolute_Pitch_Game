@@ -20,7 +20,7 @@ const levelSchema = new Schema({
 const userSchema = new Schema({
   name: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  currentLevel: { type: Number, default: -1 },
+  currentLevel: { type: Number, default: 1 },
   levelsCompleted: [levelSchema]
 });
 

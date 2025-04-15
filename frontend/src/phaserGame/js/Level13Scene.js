@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
+import axios from 'axios';
 import { preloadAssets } from './Preload.js';
 import { createAssets } from './create.js';
 import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel} from './gameutils.js'
+import ScoreManager from './ScoreTracker'
 
 export default class Level13Scene extends Phaser.Scene {
     constructor() {
@@ -95,7 +97,7 @@ export default class Level13Scene extends Phaser.Scene {
                 this.spawnEnemy(this.LightPurpleFriendly, 100, this.shootDelay);
                 break;
             default:
-                console.log("Unexpected side value:", side); // Handle unexpected values of 'side'
+                console.log("Unexpected side value:", side); 
                 break;
         }
         this.enemyCount++;

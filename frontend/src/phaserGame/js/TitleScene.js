@@ -16,17 +16,17 @@ export default class TitleScene extends Phaser.Scene {
         let background = this.add.sprite(0, 0, 'space');
         background.setOrigin(0, 0);
 
-        let title = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Absolute Pitch', { fontSize: '50px', fill: '#fff' });
+        let title = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Absolute Pitch', { fontSize: '55px', fill: '#fff' });
         title.setOrigin(0.5, 0.5);
-        title.y = 400;
+        title.y = 300;
 
-        let new_game = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'New Game', { fontSize: '30px', fill: '#fff' });
+        let new_game = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'New Game', { fontSize: '35px', fill: '#fff' });
         new_game.setOrigin(0.5, 0.5);
         new_game.y = 600;
         new_game.setInteractive();
         new_game.on('pointerdown', () => newGameForm());
 
-        let continue_game = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Continue', { fontSize: '30px', fill: '#fff' });
+        let continue_game = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, 'Continue', { fontSize: '35px', fill: '#fff' });
         continue_game.setOrigin(0.5, 0.5);
         continue_game.y = 700;
         continue_game.setInteractive();
@@ -58,7 +58,7 @@ export default class TitleScene extends Phaser.Scene {
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
                 color: '#fff',
-                fontFamily: 'Courier',
+                fontFamily: 'Arial',
                 fontSize: '25px'
             });
 
@@ -119,7 +119,7 @@ export default class TitleScene extends Phaser.Scene {
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
                 color: '#fff',
-                fontFamily: 'Courier',
+                fontFamily: 'Arial',
                 fontSize: '25px'
             });
 

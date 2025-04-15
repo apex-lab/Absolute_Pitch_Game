@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import axios from 'axios';
 import { preloadAssets } from './Preload';
 import { createAssets } from './create';
-import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel,updateScoreDisplay} from './gameutils.js'
+import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel} from './gameutils.js'
 import ScoreManager from './ScoreTracker'
 
 export default class Level1Scene extends Phaser.Scene {
@@ -15,7 +15,7 @@ export default class Level1Scene extends Phaser.Scene {
         this.canShoot = true; 
         this.lastFireTime = 0;
         this.enemyTimers = {};
-        this.levelUpThreshold = 6;
+        this.levelUpThreshold = 30;
         this.speed = 300;
         this.killData = [];
     }
@@ -67,8 +67,8 @@ export default class Level1Scene extends Phaser.Scene {
     enemyShoot(enemy) {
         enemyShoot(this,enemy)
     }
-    onEvent() {
-        this.checkForNextLevel(); // Check if conditions to move to the next level are met
+    onEvent(player) {
+        this.checkForNextLevel()
         
         let side = Phaser.Math.Between(1, 2);
         let new_side;
@@ -107,47 +107,90 @@ export default class Level1Scene extends Phaser.Scene {
 
         spawnEnemy (this,enemy,this.speed,shootDelay);
     }
+
+//     async checkForNextLevel () {
+//         const score = ScoreManager.getScore();
     
-    //Note: this.enemies.length may be useful for the study to see how many attempts it takes for players to 
-    //complete a given level. 
-    checkForNextLevel () {
+//         if (score >= this.levelUpThreshold) {
+//             const completionTime = Math.floor((Date.now() - this.levelStartTime) / 1000);
+//             const token = localStorage.getItem("authToken");
+    
+//             console.log("sending level data:", {
+//                 levelNumber: 1,
+//                 completionTime: completionTime,
+//                 score: score,
+//                 enemiesKilled: this.enemyCount,
+//                 killData: this.killData
+//             });
+    
+//             try {
+//                 const response = await axios.post("http://localhost:3000/api/level/save", 
+//                     {
+//                         levelNumber: 1,
+//                         completionTime: completionTime,
+//                         score: score,
+//                         enemiesKilled: this.enemyCount,
+//                         killData: this.killData
+//                     },
+//                     {
+//                         headers: {
+//                             Authorization: `${token}`
+//                         }
+//                     }
+//                 );
+//                 console.log("Progress saved:", response.data);
+//             } catch (err) {
+//                 console.error("Error saving progress:", err);
+//             }
+    
+//             // Only after post completes, call checkForNextLevel logic
+//             checkForNextLevel(this);
+//             this.time.delayedCall(2000, () => {
+//                 this.scene.start('Level2Scene'); 
+//             });
+//         }
+//     }
+// }
+    async checkForNextLevel () {
         const score = ScoreManager.getScore();
-        if (this.enemyCount >= this.levelUpThreshold) {
+
+        if (score >= this.levelUpThreshold) {
             const completionTime = Math.floor((Date.now() - this.levelStartTime) / 1000);
-    
             const token = localStorage.getItem("authToken");
+
             console.log("sending level data:", {
                 levelNumber: 1,
                 completionTime: completionTime,
                 score: score,
                 enemiesKilled: this.enemyCount,
                 killData: this.killData
-              });
-            axios.post("http://localhost:3000/api/level/save", 
-                {
-                  levelNumber: 1,
-                  completionTime: completionTime,
-                  score: score,
-                  enemiesKilled: this.enemyCount,
-                  killData: this.killData
-                },
-                {
-                  headers: {
-                    Authorization: `${token}`
-                  }
-                }
-              )
-              .then(response => {
-                checkForNextLevel(this);
+            });
+
+            try {
+                const response = await axios.post("http://localhost:3000/api/level/save", 
+                    {
+                        levelNumber: 1,
+                        completionTime: completionTime,
+                        score: score,
+                        enemiesKilled: this.enemyCount,
+                        killData: this.killData
+                    },
+                    {
+                        headers: {
+                            Authorization: `${token}`
+                        }
+                    }
+                );
                 console.log("Progress saved:", response.data);
-              })
-              .catch(err => {
+            } catch (err) {
                 console.error("Error saving progress:", err);
-              });
-          
+            }
+
+            // Only after post completes, call checkForNextLevel logic
+            checkForNextLevel(this);
             this.time.delayedCall(2000, () => {
                 this.scene.start('Level2Scene'); 
-              }, [], this);
-            }
+            });
         }
+    }
 }

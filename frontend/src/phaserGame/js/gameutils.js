@@ -68,7 +68,6 @@ export function enemyShoot(scene,enemy) {
         }
 }
 
-//High Key I forgot what this function is doing compared to the one below
 export function enemyHit(scene, bullet, enemy) {
     bullet.destroy();
     if (scene.enemyTimers[enemy]) {
@@ -204,7 +203,6 @@ export function playerHit(scene, bullet, player) {
         ScoreManager.resetScore();
         updateScoreDisplay(scene);
 
-        // FINAL STEP: Restart after full cleanup
         scene.time.delayedCall(1000, () => {
             killedText.destroy();
             scene.enemyCount = 0;
@@ -214,7 +212,6 @@ export function playerHit(scene, bullet, player) {
 }
 
 export function checkForNextLevel (scene) {
-    console.log(scene.enemyCount);
         ScoreManager.setPreviousScore();
         scene.player.destroy()
         cleanupScene(scene);
@@ -223,5 +220,7 @@ export function checkForNextLevel (scene) {
             fontSize: '40px',
             fill: '#fff'
         });
-        completeText.setOrigin(0.5, 0.5);  // Center the text
+        completeText.setOrigin(0.5, 0.5)
+    
 }
+    

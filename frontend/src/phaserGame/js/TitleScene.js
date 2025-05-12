@@ -146,7 +146,6 @@ export default class TitleScene extends Phaser.Scene {
                     document.body.removeChild(form);
 
                     localStorage.setItem('authToken', response.data.token);
-                    localStorage.setItem('refreshToken', response.data.refreshToken);
                     localStorage.setItem('currentLevel', response.data.currentLevel);
                     const level = response.data.currentLevel;
                     scene.scene.start(`Level${level}Scene`);

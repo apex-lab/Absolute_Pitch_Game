@@ -93,7 +93,7 @@ export function createAssets(scene) {
         hideOnComplete: true
     });
 
-    scene.laserSound = scene.sound.add('LaserEnemy');
+    //scene.laserSound = scene.sound.add('LaserEnemy');
     scene.explosion = scene.sound.add('explosion');
 
 //Creating all aliens

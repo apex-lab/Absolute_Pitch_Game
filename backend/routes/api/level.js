@@ -41,6 +41,8 @@ router.post("/save", passport.authenticate('jwt', { session: false }), async (re
       }
   
       await user.save();
+      const updatedUser = await User.findById(userId);
+      console.log("Updated user:", updatedUser.levelsCompleted);
       res.status(200).json({ message: "Progress saved successfully" });
   
     } catch (err) {

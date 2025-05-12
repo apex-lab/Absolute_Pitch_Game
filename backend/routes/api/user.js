@@ -71,10 +71,10 @@ router.post("/login", (req, res) => {
           jwt.sign(
             payload,
             keys.secretOrKey,
-            {
-              expiresIn: 31556926 // 1 year in seconds
-            },
+            {expiresIn: '15m'}, 
             (err, token) => {
+            const refreshToken = jwt.sign(payload, keys.refreshSecret, { expiresIn: '100d' }); // Refresh token expires in 7 days
+
               res.json({
                 success: true,
                 token: "Bearer " + token,
@@ -91,4 +91,25 @@ router.post("/login", (req, res) => {
     });
   });
 
+router.post('/refresh', (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+      return res.status(400).json({ message: 'Refresh token is required' });
+  }
+
+  try {
+      // Verify the refresh token
+      const decoded = jwt.verify(refreshToken, keys.refreshSecret);
+
+      // Issue a new access token
+      const payload = { id: decoded.id, name: decoded.name };
+      const newAccessToken = jwt.sign(payload, keys.secretOrKey, { expiresIn: '15m' });
+
+      res.json({ accessToken: "Bearer " + newAccessToken });
+  } catch (err) {
+      console.error(err);
+      res.status(401).json({ message: 'Invalid or expired refresh token' });
+  }
+});
 export default router

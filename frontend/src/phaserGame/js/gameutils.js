@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import ScoreManager from './ScoreTracker.js';
+import axios from 'axios';
 
 //Function to update player key presses and movement
 export function updateAssets(scene,time, delta) { 
@@ -75,7 +76,13 @@ export function enemyHit(scene, bullet, enemy) {
         delete scene.enemyTimers[enemy];
     }
     scene.enemies = scene.enemies.filter(e => e !== enemy);
+    const timeSinceStart = Math.floor((Date.now() - scene.levelStartTime) / 1000);
+    scene.killData.push({
+    enemyId: enemy.texture.key,
+    killTime: timeSinceStart
+    });
     enemy.destroy();
+    
     ScoreManager.addPoints(10);
     updateScoreDisplay(scene);
     scene.checkForNextLevel();
@@ -155,7 +162,6 @@ export function updateScoreDisplay(scene) {
 }
 
 export function cleanupScene(scene) {
-    // Stop all active enemy fire timers
     for (let timer in scene.enemyTimers) {
         if (scene.enemyTimers.hasOwnProperty(timer)) {
             scene.enemyTimers[timer].remove(true);
@@ -166,18 +172,20 @@ export function cleanupScene(scene) {
     scene.enemySpawnTimers.forEach(timer => timer.remove(true));
     scene.enemySpawnTimers = [];
 
-    // Destroy all enemies
+
     scene.enemies.forEach(enemy => {
         if (enemy?.destroy) enemy.destroy();
     });
     scene.enemies = [];
-    // Clear projectile groups
+
     scene.bullets.clear(true, true);
     scene.capture.clear(true, true);
     scene.enemyBullets.clear(true, true);
 
     // Stop sounds
-    scene.sound.stopAll();
+    if (scene.sound) {
+        scene.sound.stopAll();
+    }
 }
 
 export function playerHit(scene, bullet, player) {
@@ -212,9 +220,10 @@ export function playerHit(scene, bullet, player) {
 }
 
 export function checkForNextLevel (scene) {
+        cleanupScene(scene);
         ScoreManager.setPreviousScore();
         scene.player.destroy()
-        cleanupScene(scene);
+    
 
         let completeText = scene.add.text(scene.cameras.main.centerX, scene.cameras.main.centerY, 'Level Complete!', {
             fontSize: '40px',
@@ -223,4 +232,24 @@ export function checkForNextLevel (scene) {
         completeText.setOrigin(0.5, 0.5)
     
 }
-    
+
+// export async function refreshAuthToken() {
+//     const refreshToken = localStorage.getItem('refreshToken');
+//     if (!refreshToken) {
+//         console.error('No refresh token available.');
+//         return null;
+//     }
+
+//     try {
+//         const response = await axios.post('http://localhost:3000/api/users/refresh', {
+//             refreshToken
+//         });
+
+//         const newAccessToken = response.data.accessToken;
+//         localStorage.setItem('authToken', newAccessToken); // Update the access token
+//         return newAccessToken;
+//     } catch (err) {
+//         console.error('Failed to refresh auth token:', err.response?.data || err.message);
+//         return null;
+//     }
+// }

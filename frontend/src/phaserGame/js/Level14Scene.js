@@ -16,7 +16,8 @@ export default class Level14Scene extends Phaser.Scene {
         this.fireRate = 200;
         this.canShoot = true; 
         this.canSnare = true;
-        this.levelUpThreshold = 28;
+        this.speed = 300;
+        this.levelUpThreshold = 1950;
     }
     preload() {
         preloadAssets(this);
@@ -150,14 +151,46 @@ export default class Level14Scene extends Phaser.Scene {
                 console.log("Unexpected enemy value")
                 break;
         }
-        spawnEnemy (this,enemy,speed,shootDelay);
+        spawnEnemy (this,enemy,this.speed,shootDelay);
     }
-    checkForNextLevel() {
-        if (this.enemyCount >= this.levelUpThreshold) {
-            checkForNextLevel(this);
-            this.time.delayedCall(3000, () => {
+    async checkForNextLevel () {
+        const score = ScoreManager.getScore();
+
+        if (score >= this.levelUpThreshold) {
+            const completionTime = Math.floor((Date.now() - this.levelStartTime) / 1000);
+            // const token = localStorage.getItem("authToken");
+
+            // console.log("sending level data:", {
+            //     levelNumber: 14,
+            //     completionTime: completionTime,
+            //     score: score,
+            //     enemiesKilled: this.enemyCount,
+            //     killData: this.killData
+            // });
+            // try {
+            //     const response = await axios.post("http://localhost:3000/api/level/save", 
+            //         {
+            //             levelNumber: 1,
+            //             completionTime: completionTime,
+            //             score: score,
+            //             enemiesKilled: this.enemyCount,
+            //             killData: this.killData
+            //         },
+            //         {
+            //             headers: {
+            //                 Authorization: `${token}`
+            //             }
+            //         }
+            //     );
+            //     console.log("Progress saved:", response.data);
+                
+            // } catch (err) {
+            //     console.error("Error saving progress:", err);
+            // }
+            this.time.delayedCall(2000, () => {
                 this.scene.start('Level15Scene'); 
-            }, [], this);
+            });
+            checkForNextLevel(this);
         }
     }
 }

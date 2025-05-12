@@ -17,7 +17,8 @@ export default class Level2Scene extends Phaser.Scene {
         this.fireRate = 200; 
         this.canSnare = false; 
         this.canShoot = true; 
-        this.levelUpThreshold = 250
+        this.speed = 300;
+        this.levelUpThreshold = 270
     }
     preload() {
         preloadAssets(this);
@@ -27,7 +28,7 @@ export default class Level2Scene extends Phaser.Scene {
         this.load.image('space', 'assets/space.png');
         let background = this.add.sprite(0, 0, 'space');
         background.setOrigin(0,0)
-        // Display "Level 1" text centered on the screen
+       
         const levelText = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY,
@@ -109,42 +110,49 @@ export default class Level2Scene extends Phaser.Scene {
                 console.log("Unexpected enemy value")
                 break;
         }
-        spawnEnemy (this,enemy,speed,shootDelay);
+        spawnEnemy (this,enemy,this.speed,shootDelay);
     }
 
-    checkForNextLevel()  {
+    async checkForNextLevel () {
         const score = ScoreManager.getScore();
+
         if (score >= this.levelUpThreshold) {
             const completionTime = Math.floor((Date.now() - this.levelStartTime) / 1000);
-    
-            const token = localStorage.getItem("authToken");
-            
-            axios.post("http://localhost:3000/api/level/save", 
-                {
-                  levelNumber: 2,
-                  completionTime: completionTime,
-                  score: score,
-                  enemiesKilled: this.enemyCount,
-                  killData: this.killData
-                },
-                {
-                  headers: {
-                    Authorization: `${token}`
-                  }
-                }
-              )
-              .then(response => {
-                checkForNextLevel(this);
-                console.log("Progress saved:", response.data);
-              })
-              .catch(err => {
-                console.error("Error saving progress:", err);
-              });
-          
-            this.time.delayedCall(2000, () => {
+            // const token = localStorage.getItem("authToken");
+
+            // console.log("sending level data:", {
+            //     levelNumber: 2,
+            //     completionTime: completionTime,
+            //     score: score,
+            //     enemiesKilled: this.enemyCount,
+            //     killData: this.killData
+            // });
+
+            // try {
+            //     const response = await axios.post("http://localhost:3000/api/level/save", 
+            //         {
+            //             levelNumber: 1,
+            //             completionTime: completionTime,
+            //             score: score,
+            //             enemiesKilled: this.enemyCount,
+            //             killData: this.killData
+            //         },
+            //         {
+            //             headers: {
+            //                 Authorization: `${token}`
+            //             }
+            //         }
+            //     );
+            //     });
+            //     console.log("Progress saved:", response.data);
+            // } catch (err) {
+            //     console.error("Error saving progress:", err);
+            // }
+            checkForNextLevel(this);
+            this.time.delayedCall(1000, () => {
                 this.scene.start('Level3Scene'); 
-              }, [], this);
-            }
+            });
         }
+    }
 }
 

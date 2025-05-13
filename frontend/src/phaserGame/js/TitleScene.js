@@ -77,7 +77,7 @@ export default class TitleScene extends Phaser.Scene {
                 }
 
                 try {
-                    const response = await axios.post('http://localhost:3000/api/users/register', {
+                    const response = await axios.post('https://absolute-pitch-game.onrender.com/api/users/register', {
                         name,
                         password,
                         password2
@@ -137,7 +137,7 @@ export default class TitleScene extends Phaser.Scene {
                 }
 
                 try {
-                    const response = await axios.post('http://localhost:3000/api/users/login', {
+                    const response = await axios.post('https://absolute-pitch-game.onrender.com/api/users/login', {
                         name,
                         password
                     });

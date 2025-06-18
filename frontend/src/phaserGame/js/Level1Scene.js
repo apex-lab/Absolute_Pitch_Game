@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import axios from 'axios';
+import axiosInstance from './api'
 import { preloadAssets } from './Preload';
 import { createAssets } from './create';
 import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel,generateBalancedQueue} from './gameutils.js'
@@ -61,7 +61,7 @@ startLevel() {
         level1: generateBalancedQueue(this.enemyTypes, 14, 7),
     };
     this.currentQueue = [...this.levelQueues.level1];
-    
+
     if (this.timedEvent) {
         this.timedEvent.remove();
         console.log("Old timer removed.");
@@ -102,48 +102,48 @@ startLevel() {
 
         if (score >= this.levelUpThreshold) {
             const completionTime = Math.floor((Date.now() - this.levelStartTime) / 1000);
-            // const token = localStorage.getItem("authToken");
-            // if (!token && retries > 0) {
-            //     console.warn("Token missing. Retrying...");
-            //     this.time.delayedCall(delay, () => {
-            //         this.checkForNextLevel(retries - 1, delay);
-            //     });
-            //     return;
-            // }
+            const token = localStorage.getItem("authToken");
+            if (!token && retries > 0) {
+                console.warn("Token missing. Retrying...");
+                this.time.delayedCall(delay, () => {
+                    this.checkForNextLevel(retries - 1, delay);
+                });
+                return;
+            }
     
-            // if (!token) {
-            //     console.error("Auth token still missing after retries.");
-            //     return;
-            // }
+            if (!token) {
+                console.error("Auth token still missing after retries.");
+                return;
+            }
 
-            // console.log("sending level data:", {
-            //     levelNumber: 1,
-            //     completionTime: completionTime,
-            //     score: score,
-            //     enemiesKilled: this.enemyCount,
-            //     killData: this.killData
-            // });
+            console.log("sending level data:", {
+                levelNumber: 1,
+                completionTime: completionTime,
+                score: score,
+                enemiesKilled: this.enemyCount,
+                killData: this.killData
+            });
 
-            // try {
-            //     const response = await axiosInstance.post("http://localhost:3000/api/level/save", 
-            //         {
-            //             levelNumber: 1,
-            //             completionTime: completionTime,
-            //             score: score,
-            //             enemiesKilled: this.enemyCount,
-            //             killData: this.killData
-            //         },
-            //         {
-            //             headers: {
-            //                 Authorization: `${token}`
-            //             }
-            //         }
-            //     );
-            //     console.log("Progress saved:", response.data);
+            try {
+                const response = await axiosInstance.post("http://localhost:3000/api/level/save", 
+                    {
+                        levelNumber: 1,
+                        completionTime: completionTime,
+                        score: score,
+                        enemiesKilled: this.enemyCount,
+                        killData: this.killData
+                    },
+                    {
+                        headers: {
+                            Authorization: `${token}`
+                        }
+                    }
+                );
+                console.log("Progress saved:", response.data);
 
-            // } catch (err) {
-            //     console.error("Error saving progress:", err);
-            // } 
+            } catch (err) {
+                console.error("Error saving progress:", err);
+            } 
             checkForNextLevel(this);
             this.time.delayedCall(1000, () => {
                 this.scene.start('Level2Scene'); 

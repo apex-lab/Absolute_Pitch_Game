@@ -70,7 +70,7 @@ export function createAssets(scene) {
 
     scene.physics.add.overlap(scene.enemyBullets, scene.player, scene.playerHit, null, scene);
 
-    scene.physics.add.overlap(scene.bullets, scene.enemies, (enemy, bullet) => {
+    scene.physics.add.overlap(scene.bullets, scene.enemies, (bullet,enemy) => {
         captureEnemy(scene, null, bullet, enemy);
     });
 

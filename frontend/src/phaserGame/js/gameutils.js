@@ -93,11 +93,13 @@ export function enemyShoot(scene,enemy) {
 
 export function enemyHit(scene, bullet, enemy) {
     bullet.destroy();
+
     if (scene.enemyTimers[enemy]) {
         scene.enemyTimers[enemy].remove();
         delete scene.enemyTimers[enemy];
     }
     scene.enemies.remove(enemy, true, true);
+
     const timeSinceStart = Math.floor((Date.now() - scene.levelStartTime) / 1000);
     scene.killData.push({
     enemyId: enemy.texture.key,
@@ -111,32 +113,36 @@ export function enemyHit(scene, bullet, enemy) {
 }
 
 export function captureEnemy(scene,capture,bullet,enemy){
-    if (enemy) { 
-        const enemyCategory = enemy.category;
-        const captureType = capture ? capture.type : (bullet ? bullet.type : 'unknown');
+
+    const captureType = capture ? capture.type : (bullet ? bullet.type : 'unknown');
+    const category = enemy.category ?? 'unknown';
     if (scene.enemyTimers[enemy]) {
         scene.enemyTimers[enemy].remove();
         delete scene.enemyTimers[enemy];
     }
 
+   console.log("enemy.category:", enemy.category);
     scene.enemies.remove(enemy, true, true);
+    console.log("About to update score");
+    console.log("Enemy:", enemy.texture.key);
+    console.log("Score before:", ScoreManager.getScore?.());
 
     // Checking projectile and category of enemy. This will be updated in the 
     // future to vary in point deduction and granting. 
-    if (enemyCategory === 'E2') {
+    if (category === 'E2') {
         if (captureType === 'type2') {
             ScoreManager.addPoints(10);
         } else if (captureType === 'type1') {
             ScoreManager.addPoints(-10);
         }
-    } else if (enemyCategory === 'E1') {
+    } else if (category === 'E1') {
         if (captureType === 'type2') {
             ScoreManager.addPoints(-10);
         } else if (captureType === 'type1') {
             ScoreManager.addPoints(10); 
         }
     }
-
+     console.log("Score after:", ScoreManager.getScore?.());
     //Checking which projectile was fired and destorying it once determined
     if (bullet) { 
         bullet.destroy();
@@ -153,7 +159,7 @@ export function captureEnemy(scene,capture,bullet,enemy){
         updateScoreDisplay(scene);
         scene.checkForNextLevel();
     }
-}
+
 
 //Function to spawn enemy
 //Mayor problems here
@@ -161,13 +167,20 @@ export function spawnEnemy(scene, enemyKey, speed) {
     const def = scene.enemyTemplates[enemyKey];
     const port = scene.ports[def.port];
 
+    if (!def) {
+        console.error(`❌ No template found for enemyKey: "${enemyKey}"`);
+        console.log("✅ Available keys:", Object.keys(scene.enemyTemplates));
+        return;
+    }
+
     const enemy = scene.enemies.get(scene.player.x, scene.player.y, def.key);
     if (!enemy) return;
 
     enemy.setTexture(def.key);
     enemy.setPosition(port.x, port.y);
     enemy.setActive(true).setVisible(true);
-    enemy.category = def.category;
+    enemy.category = def.category ?? 'unknown';
+    console.log("✅ Assigned category:", enemy.category);
 
     // Ensure physics body is enabled
     if (!enemy.body) {

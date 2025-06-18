@@ -3,59 +3,80 @@ import ScoreManager from './ScoreTracker.js';
 import axios from 'axios';
 
 //Function to update player key presses and movement
+// This is fine do not change this
 export function updateAssets(scene,time, delta) { 
-    //Enables cursor movement for player
-    const mouseX = scene.input.mousePointer.worldX;
-    const mouseY = scene.input.mousePointer.worldY;
- 
-    // Calculate the angle between the player and the mouse pointer
-    const angle = Phaser.Math.Angle.BetweenPoints(
-         scene.player, 
-         { x: mouseX, y: mouseY }
-     );
-    // Set the player rotation to the calculated angle
-    scene.player.rotation = angle;
-    // creating collision boundaries for player and projectiles 
-    scene.physics.add.overlap(scene.enemyBullets, scene.player, scene.playerHit, null, scene);
-    scene.physics.add.overlap(scene.bullets, scene.enemies, (enemy, bullets) => {
-        captureEnemy(scene, null, bullets, enemy);
-    });
-    scene.physics.add.overlap(scene.capture, scene.enemies, (enemy, capture) => {
-        captureEnemy(scene, capture, null, enemy);
-    });
-    // enabling projectiles. 
+    // Arrow keys for movement 
+    const ROTATION_STEP = Phaser.Math.DegToRad(30);
+    const { left, right } = scene.cursors;
+    const state = scene.rotationState;
+
+    // Left Key 
+    if (left.isDown) {
+        state.leftHeldTime += delta;
+
+        if (
+            Phaser.Input.Keyboard.JustDown(left) || 
+            (state.leftHeldTime > state.delay && time - state.lastLeftRotation > state.interval)
+        ) {
+            scene.player.rotation -= ROTATION_STEP;
+            state.lastLeftRotation = time;
+        }
+    } else {
+        state.leftHeldTime = 0;
+    }
+
+    // Right Key
+    if (right.isDown) {
+        state.rightHeldTime += delta;
+
+        if (
+            Phaser.Input.Keyboard.JustDown(right) || 
+            (state.rightHeldTime > state.delay && time - state.lastRightRotation > state.interval)
+        ) {
+            scene.player.rotation += ROTATION_STEP;
+            state.lastRightRotation = time;
+        }
+    } else {
+        state.rightHeldTime = 0;
+    }
+
+    // W Key for shooting
     if (scene.canShoot && scene.wKey.isDown) {
          Shoot(scene,time);  
     }
+    // E Key for shooting
     if (scene.canSnare && scene.eKey.isDown) {
         fireSnare(scene,time);  
     }
 }
-//The shoot function for the first type of alein
+
+// I might be able to combine these two functions into one, but for now I will leave them separate
 export function Shoot(scene, time) {
     if (time - scene.lastFireTime > scene.fireRate) {
         const bullet = scene.bullets.get();
         if (bullet) {
             bullet.type = 'type1';
-            const angle = Phaser.Math.Angle.Between(scene.player.x, scene.player.y, scene.mouseX, scene.mouseY);
-            bullet.fire(scene.player.x, scene.player.y, angle - Math.PI / 2);
+            const angle = scene.player.rotation - Math.PI / 2
+            bullet.fire(scene.player.x, scene.player.y, angle);
             scene.lastFireTime = time;
         }
     }
 }
+
 // The shoot function for the second type of alien
 export function fireSnare(scene,time) { 
     if (time - scene.lastFireTime > scene.fireRate) {
         const capture = scene.capture.get();
         if (capture) { 
             capture.type = 'type2';
-            const angle = Phaser.Math.Angle.Between(scene.player.x, scene.player.y, scene.mouseX, scene.mouseY);
-            capture.fire(scene.player.x, scene.player.y, angle - Math.PI/2);
+             const angle = scene.player.rotation - Math.PI / 2
+            capture.fire(scene.player.x, scene.player.y, angle);
             scene.lastFireTime = time;
         }
     }
 }
-//Alien Projectiles
+
+//Problems emerge because of the following functions
 export function enemyShoot(scene,enemy) { 
     if (!scene.scene.isActive()) return;
     if (!scene.player || !scene.player.active) return;
@@ -69,13 +90,16 @@ export function enemyShoot(scene,enemy) {
         }
 }
 
+
 export function enemyHit(scene, bullet, enemy) {
     bullet.destroy();
+
     if (scene.enemyTimers[enemy]) {
         scene.enemyTimers[enemy].remove();
         delete scene.enemyTimers[enemy];
     }
-    scene.enemies = scene.enemies.filter(e => e !== enemy);
+    scene.enemies.remove(enemy, true, true);
+
     const timeSinceStart = Math.floor((Date.now() - scene.levelStartTime) / 1000);
     scene.killData.push({
     enemyId: enemy.texture.key,
@@ -89,37 +113,43 @@ export function enemyHit(scene, bullet, enemy) {
 }
 
 export function captureEnemy(scene,capture,bullet,enemy){
-    if (enemy) { 
-        const enemyCategory = enemy.category;
-        const captureType = capture ? capture.type : (bullet ? bullet.type : 'unknown');
+
+    const captureType = capture ? capture.type : (bullet ? bullet.type : 'unknown');
+    const category = enemy.category ?? 'unknown';
     if (scene.enemyTimers[enemy]) {
         scene.enemyTimers[enemy].remove();
         delete scene.enemyTimers[enemy];
     }
 
-    scene.enemies = scene.enemies.filter(e => e !== enemy);
+   console.log("enemy.category:", enemy.category);
+    scene.enemies.remove(enemy, true, true);
+    console.log("About to update score");
+    console.log("Enemy:", enemy.texture.key);
+    console.log("Score before:", ScoreManager.getScore?.());
 
     // Checking projectile and category of enemy. This will be updated in the 
     // future to vary in point deduction and granting. 
-    if (enemyCategory === 'E2') {
+    if (category === 'E2') {
         if (captureType === 'type2') {
             ScoreManager.addPoints(10);
         } else if (captureType === 'type1') {
             ScoreManager.addPoints(-10);
         }
-    } else if (enemyCategory === 'E1') {
+    } else if (category === 'E1') {
         if (captureType === 'type2') {
             ScoreManager.addPoints(-10);
         } else if (captureType === 'type1') {
-            ScoreManager.addPoints(10); // Adjust as needed
+            ScoreManager.addPoints(10); 
         }
     }
+     console.log("Score after:", ScoreManager.getScore?.());
     //Checking which projectile was fired and destorying it once determined
     if (bullet) { 
         bullet.destroy();
     } else { 
         capture.destroy();
     }
+
     const timeSinceStart = Math.floor((Date.now() - scene.levelStartTime) / 1000);
     scene.killData.push({
     enemyId: enemy.texture.key,
@@ -129,38 +159,79 @@ export function captureEnemy(scene,capture,bullet,enemy){
         updateScoreDisplay(scene);
         scene.checkForNextLevel();
     }
-}
+
+
 //Function to spawn enemy
-export function spawnEnemy(scene, enemy, speed){ 
-    if (!scene.player || !scene.scene.isActive()) return;
-    const ShootDelay = 2000;
-    const audioPlayDelay = 3500;
+//Mayor problems here
+export function spawnEnemy(scene, enemyKey, speed) {
+    const def = scene.enemyTemplates[enemyKey];
+    const port = scene.ports[def.port];
 
-    const spawnTimer = scene.time.delayedCall(audioPlayDelay, () => {
-        let newEnemy = scene.physics.add.sprite(enemy.x, enemy.y, enemy.texture.key);
-        newEnemy.setScale(enemy.scale);
-        newEnemy.setOrigin(enemy.originX, enemy.originY);
-        newEnemy.setActive(true).setVisible(true);
-        newEnemy.category = enemy.category;
-        scene.enemies.push(newEnemy);
-        scene.physics.moveToObject(newEnemy, scene.player, speed);
+    if (!def) {
+        console.error(`❌ No template found for enemyKey: "${enemyKey}"`);
+        console.log("✅ Available keys:", Object.keys(scene.enemyTemplates));
+        return;
+    }
 
-        let shootTimer = scene.time.delayedCall(ShootDelay, () => {
-            scene.enemyShoot(newEnemy);
-        }, [], this);
+    const enemy = scene.enemies.get(scene.player.x, scene.player.y, def.key);
+    if (!enemy) return;
 
-        scene.enemyTimers[newEnemy] = shootTimer;
+    enemy.setTexture(def.key);
+    enemy.setPosition(port.x, port.y);
+    enemy.setActive(true).setVisible(true);
+    enemy.category = def.category ?? 'unknown';
+    console.log("✅ Assigned category:", enemy.category);
 
-    }, [], scene);
+    // Ensure physics body is enabled
+    if (!enemy.body) {
+        scene.physics.add.existing(enemy);  // fallback in case it's missing
+    } else {
+        enemy.body.enable = true;
+    }
 
-    scene.enemySpawnTimers.push(spawnTimer); 
+    const SoundKey = Phaser.Utils.Array.GetRandom(def.soundSet);
+    const sound = scene.sound.add(SoundKey);
+
+    const delay = 3500;
+    sound.play();
+    sound.once('complete', () => {
+    console.log('Sound finished');
+});
+    console.log('Scene is active:', scene.scene.isActive());
+    scene.time.delayedCall(delay, () => {
+        console.log(`Moving enemy toward player at (${scene.player.x}, ${scene.player.y})`);
+        scene.physics.moveToObject(enemy, scene.player, speed);
+
+        // Add shoot behavior after delay
+        scene.enemyTimers[enemy] = scene.time.delayedCall(2000, () => scene.enemyShoot(enemy));
+    });
+
+    return enemy;
 }
 
+export function generateBalancedQueue(enemyTypes, totalCount, maxPerType) {
+    const queue = [];
+    const counts = {};
+
+    while (queue.length < totalCount) {
+        const pick = Phaser.Utils.Array.GetRandom(enemyTypes);
+        counts[pick] = (counts[pick] || 0) + 1;
+
+        if (counts[pick] <= maxPerType) {
+        queue.push(pick);
+        }
+    }
+
+    return queue;
+}
+
+// This is fine
 export function updateScoreDisplay(scene) {
     let currentScore = ScoreManager.getScore();
     scene.scoreText.setText('Score: ' + currentScore);
 }
 
+// Potential problems with this function
 export function cleanupScene(scene) {
     for (let timer in scene.enemyTimers) {
         if (scene.enemyTimers.hasOwnProperty(timer)) {
@@ -171,11 +242,6 @@ export function cleanupScene(scene) {
 
     scene.enemySpawnTimers.forEach(timer => timer.remove(true));
     scene.enemySpawnTimers = [];
-
-
-    scene.enemies.forEach(enemy => {
-        if (enemy?.destroy) enemy.destroy();
-    });
     scene.enemies = [];
 
     scene.bullets.clear(true, true);
@@ -203,7 +269,6 @@ export function playerHit(scene, bullet, player) {
     });
     killedText.setOrigin(0.5, 0.5);
 
-    // Delay cleanup slightly to let animation/audio play smoothly
     scene.time.delayedCall(300, () => {
         cleanupScene(scene);
         // killedText.destroy();

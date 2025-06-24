@@ -5,8 +5,8 @@ export function preloadAssets(scene) {
 	scene.load.image('space', '/assets/space.png');
 	scene.load.spritesheet('claw', '/assets/claw.png', { frameWidth: 12, frameHeight: 14 });
 	scene.load.spritesheet('player', '/assets/player.png', { frameWidth: 14, frameHeight: 16 });
-	scene.load.spritesheet('blue-enemy', '/assets/Blue-Enemy.png', { frameWidth: 30, frameHeight: 30 });
-	scene.load.spritesheet('green-enemy', '/assets/Green-Enemy.png', { frameWidth: 30, frameHeight: 30 });
+	scene.load.spritesheet('BlueEnemy', '/assets/Blue-Enemy.png', { frameWidth: 30, frameHeight: 30 });
+	scene.load.spritesheet('GreenEnemy', '/assets/Green-Enemy.png', { frameWidth: 30, frameHeight: 30 });
 	scene.load.spritesheet('bullet', '/assets/Bullet.png', { frameWidth: 32, frameHeight: 32 });
 	scene.load.spritesheet('AquaFriendly', '/assets/Aqua-Friendly.png', { frameWidth: 32, frameHeight: 32 });
 	scene.load.spritesheet('capture', '/assets/capture.png', {frameWidth: 32, frameHeight:32});
@@ -136,4 +136,25 @@ export function preloadAssets(scene) {
 	scene.load.audio('FSh_Scale6', '/assets/Randomized_Tones/Random_FSh/FSh_Scale6.wav');
 	scene.load.audio('FSh_Scale7', '/assets/Randomized_Tones/Random_FSh/FSh_Scale7.wav');
 	
+	//Loading scrambles
+	scene.load.audio('scramble1', '/assets/scrambles/scramble_01.wav');
+	scene.load.audio('scramble2', '/assets/scrambles/scramble_02.wav');
+	scene.load.audio('scramble3', '/assets/scrambles/scramble_03.wav');
+	scene.load.audio('scramble4', '/assets/scrambles/scramble_04.wav');
+	scene.load.audio('scramble5', '/assets/scrambles/scramble_05.wav');
+	scene.load.audio('scramble6', '/assets/scrambles/scramble_06.wav');
+	scene.load.audio('scramble7', '/assets/scrambles/scramble_07.wav');
+	scene.load.audio('scramble8', '/assets/scrambles/scramble_08.wav');
+	scene.load.audio('scramble9', '/assets/scrambles/scramble_09.wav');
+	scene.load.audio('scramble10', '/assets/scrambles/scramble_10.wav');
+	scene.load.audio('scramble11', '/assets/scrambles/scramble_11.wav');
+	scene.load.audio('scramble12', '/assets/scrambles/scramble_12.wav');
+	scene.load.audio('scramble13', '/assets/scrambles/scramble_13.wav');
+	scene.load.audio('scramble14', '/assets/scrambles/scramble_14.wav');
+	scene.load.audio('scramble15', '/assets/scrambles/scramble_15.wav');
+	scene.load.audio('scramble16', '/assets/scrambles/scramble_16.wav');
+	scene.load.audio('scramble17', '/assets/scrambles/scramble_17.wav');
+	scene.load.audio('scramble18', '/assets/scrambles/scramble_18.wav');
+	scene.load.audio('scramble19', '/assets/scrambles/scramble_19.wav');
+	scene.load.audio('scramble20', '/assets/scrambles/scramble_20.wav');
 }

@@ -2,34 +2,26 @@ import Phaser from 'phaser';
 import axiosInstance from './api'
 import { preloadAssets } from './Preload';
 import { createAssets } from './create';
-import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel,generateBalancedQueue} from './gameutils.js'
+import {enemyShoot, playerHit,updateAssets, enemyHit, spawnEnemy,checkForNextLevel,generateBalancedQueue} from './gameutils.js'
 import ScoreManager from './ScoreTracker'
 
 export default class Level1Scene extends Phaser.Scene {
     constructor() {
-        super({ key: 'Level1Scene' });
-        this.fireRate = 200;
-        this.canSnare = false; 
-        this.canShoot = true; 
-        this.lastFireTime = 0;
-        this.enemyTimers = {};
-        this.levelUpThreshold = 130;
-        this.speed = 300;
-        this.killData = [];
+        super({ key: 'Level1Scene' });   
     }
     preload() {
         preloadAssets(this);
     }
-
     create(){
     this.levelStarted = false;
     this.fireRate = 200;
-    this.canSnare = false;
-    this.canShoot = true;
+    this.bullet2 = false;
+    this.bullet1 = true;
     this.lastFireTime = 0;
     this.enemyTimers = {};
     this.speed = 300;
-    this.killData = [];
+    this.levelUpThreshold = 140;
+    this.canSpawn = true;
 
     this.load.image('space', 'assets/space.png');
     let background = this.add.sprite(0, 0, 'space');
@@ -64,7 +56,6 @@ startLevel() {
 
     if (this.timedEvent) {
         this.timedEvent.remove();
-        console.log("Old timer removed.");
     }
 
     this.timedEvent = this.time.addEvent({
@@ -82,8 +73,8 @@ startLevel() {
     playerHit(bullet, player) {
         playerHit(this, bullet, player)
     }
-    CaptureEnemy(capture, bullet, enemy) {
-        captureEnemy(this, capture,bullet,enemy);
+    enemyHit(projectile, enemy) {
+        enemyHit(this, projectile,enemy);
     }
     enemyShoot(enemy) {
         enemyShoot(this,enemy)
@@ -92,9 +83,17 @@ startLevel() {
     onEvent() {
     this.checkForNextLevel();
     if (!this.currentQueue || this.currentQueue.length === 0) return;
+
+    if (!this.canSpawn) return;  
+    this.canSpawn = false;
+
     const nextEnemy = this.currentQueue.shift();
-    spawnEnemy(this, nextEnemy, this.speed);
-    console.log("Spawning enemy:", nextEnemy);
+    spawnEnemy(this, nextEnemy, this.speed).then(() => {
+        this.canSpawn = true;
+        if (!this.scene,!this.sys || !this.sys.isActive()) return;
+        this.time.delayedCall(500, () => this.onEvent());
+    });
+       
 }
 
     async checkForNextLevel (retries = 5, delay = 300) {

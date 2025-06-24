@@ -1,29 +1,27 @@
 import Phaser from 'phaser';
-import axios from 'axios';
-import { preloadAssets } from './Preload.js';
-import { createAssets } from './create.js';
-import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel} from './gameutils.js'
+import axiosInstance from './api'
+import { preloadAssets } from './Preload';
+import { createAssets } from './create';
+import {enemyShoot, playerHit,updateAssets, enemyHit, spawnEnemy,checkForNextLevel,generateBalancedQueue} from './gameutils.js'
 import ScoreManager from './ScoreTracker'
 
 export default class Level6Scene extends Phaser.Scene {
     constructor() {
-        super({ key: 'Level6Scene' });
-        this.mouseX = 0;
-        this.mouseY = 0;
-        this.enemyTimers = {};
-        this.enemyCount = 0;
-        this.lastFireTime = 0;
-        this.fireRate = 200;
-        this.canShoot = true; 
-        this.canSnare = true;
-        this.speed = 300
-        this.levelUpThreshold = 800
+        super({ key: 'Level6Scene' }); 
     }
     preload() {
         preloadAssets(this);
     }
     create() {
         this.levelStarted = false;
+        this.fireRate = 200;
+        this.bullet2 = false;
+        this.bullet1 = true;
+        this.lastFireTime = 0;
+        this.enemyTimers = {};
+        this.speed = 300;
+        this.levelUpThreshold = 560;
+        this.canSpawn = true;
 
         this.load.image('space', 'assets/space.png');
         let background = this.add.sprite(0, 0, 'space');
@@ -39,7 +37,6 @@ export default class Level6Scene extends Phaser.Scene {
             }
         ).setOrigin(0.5);
 
-        // After a delay, destroy the text and start the level
         this.time.delayedCall(2000, () => {
             levelText.destroy();
             this.startLevel(); 
@@ -48,8 +45,27 @@ export default class Level6Scene extends Phaser.Scene {
 
     startLevel() {
         this.levelStarted = true;
+        this.levelStartTime = Date.now();
+        this.killData = []; 
+        this.enemyCount = 0; 
         createAssets(this);
 
+        this.enemyTypes = ['MagentaFriendly', 'PinkFriendly'];
+                this.levelQueues = {
+                    level6: generateBalancedQueue(this.enemyTypes, 14, 7),
+                };
+                this.currentQueue = [...this.levelQueues.level6];
+        
+                if (this.timedEvent) {
+                    this.timedEvent.remove();
+                }
+        
+                this.timedEvent = this.time.addEvent({
+                    delay: 4000,
+                    callback: this.onEvent,
+                    callbackScope: this,
+                    loop: true
+            });
     }
     update(time,delta) {
         if (!this.levelStarted) return; 
@@ -58,46 +74,26 @@ export default class Level6Scene extends Phaser.Scene {
     playerHit(bullet, player) {
         playerHit(this, bullet, player)
     }
-    CaptureEnemy(capture, bullet, enemy) {
-        captureEnemy(this, capture,bullet,enemy);
+    enemyHit(projectile, enemy) {
+        enemyHit(this, projectile,enemy);
     }
     enemyShoot(enemy) {
         enemyShoot(this,enemy)
     }
     onEvent() {
-        this.checkForNextLevel(); // Check if conditions to move to the next level are met
-        let side = Phaser.Math.Between(1,2);
-        switch (side) {
-            case 1:
-                this.spawnEnemy(this.MagentaFriendly, 100, this.ShootDelay);
-                break;
-            case 2: 
-                this.spawnEnemy(this.PinkFriendly, 100, this.ShootDelay);
-                break;
-            default: 
-                console.log("Unexpected side value", side)
-                break;
-        }
-        this.enemyCount++;
-    }
+        this.checkForNextLevel(); 
 
-    spawnEnemy(enemy, speed, shootDelay) {
-        const randIndex = Phaser.Math.Between(0, 1);
-        //Adding unique chromatic scale to each enemy
-        switch(enemy.texture.key){
-            case 'MagentaFriendly':
-                console.log("Playing sound:", this.MagentaFriendlySounds[randIndex].key);
-                this.MagentaFriendlySounds[randIndex].play();
-                break;
-            case 'PinkFriendly':
-                console.log("Playing sound:", this.PinkFriendlySounds[randIndex].key);
-                this.PinkFriendlySounds[randIndex].play();
-                break;
-            default: 
-                console.log("Unexpected enemy value")
-                break;
-        }
-        spawnEnemy (this,enemy,this.speed,shootDelay);
+        if (!this.currentQueue || this.currentQueue.length === 0) return;
+
+        if (!this.canSpawn) return;  
+        this.canSpawn = false;
+
+        const nextEnemy = this.currentQueue.shift();
+        spawnEnemy(this, nextEnemy, this.speed).then(() => {
+            this.canSpawn = true;
+            if (!this.scene,!this.sys || !this.sys.isActive()) return;
+            this.time.delayedCall(500, () => this.onEvent());
+        });
     }
 
     async checkForNextLevel () {

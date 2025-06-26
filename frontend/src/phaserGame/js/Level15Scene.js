@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import axiosInstance from './api'
 import { preloadAssets } from './Preload';
 import { createAssets } from './create';
-import {enemyShoot, playerHit,updateAssets, enemyHit, spawnEnemy,checkForNextLevel,generateBalancedQueue} from './gameutils.js'
+import {enemyShoot, playerHit,updateAssets, enemyHit, spawnEnemy,checkForNextLevel,generateBalancedQueue,handleLevelCompletion} from './gameutils.js'
 import ScoreManager from './ScoreTracker'
 
 export default class Level15Scene extends Phaser.Scene {
@@ -22,7 +22,7 @@ export default class Level15Scene extends Phaser.Scene {
         this.speed = 300;
         this.levelUpThreshold = 1400;
         this.canSpawn = true;
-        this.levelUpThreshold = 1540;
+        this.levelUpThreshold = 1470;
 
         this.load.image('space', 'assets/space.png');
         let background = this.add.sprite(0, 0, 'space');
@@ -97,45 +97,7 @@ export default class Level15Scene extends Phaser.Scene {
             this.time.delayedCall(500, () => this.onEvent());
         });
     }
-    async checkForNextLevel () {
-        const score = ScoreManager.getScore();
-
-        if (score >= this.levelUpThreshold) {
-            const completionTime = Math.floor((Date.now() - this.levelStartTime) / 1000);
-            // const token = localStorage.getItem("authToken");
-
-            // console.log("sending level data:", {
-            //     levelNumber: 1,
-            //     completionTime: completionTime,
-            //     score: score,
-            //     enemiesKilled: this.enemyCount,
-            //     killData: this.killData
-            // });
-            // try {
-            //     const response = await axios.post("http://localhost:3000/api/level/save", 
-            //         {
-            //             levelNumber: 15,
-            //             completionTime: completionTime,
-            //             score: score,
-            //             enemiesKilled: this.enemyCount,
-            //             killData: this.killData
-            //         },
-            //         {
-            //             headers: {
-            //                 Authorization: `${token}`
-            //             }
-            //         }
-            //     );
-            //     console.log("Progress saved:", response.data);
-                
-            // } catch (err) {
-            //     console.error("Error saving progress:", err);
-            // }
-            this.time.delayedCall(2000, () => {
-                this.scene.start('TitleScene'); 
-            });
-            checkForNextLevel(this);
-            
-        }
+    async checkForNextLevel() {
+        await handleLevelCompletion(this, 'TitleScene', 15); 
     }
 }

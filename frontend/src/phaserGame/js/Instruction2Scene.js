@@ -15,14 +15,14 @@ export default class Instruction2Scene extends Phaser.Scene {
         background.setOrigin(0, 0);
         
         const instructions = [
-           "Congratulations! You have completed the first phase",
+           "Congratulations! You have completed Phase 1. \n\n",
             "You will now begin Phase 2. \n\n",
-            "This phase will consist of new aliens \n\n Each alien will come from the same port as aliens from the previous phase \n\n",
-            "To shoot these aliens use the E key",
-            "Remember, the faster that you shoot the alien the more points you will get \n\n ",
+            "This phase will consist of a new set of aliens \n\n Each alien will appear from the same screen location (or 'port') as an  alien from the previous phase.\n\n",
+            "Controls \n \n Use the Left and Right arrow keys to ratate the ship. \n\n Press the E key to shoot.",
             "Aliens will attack if not defeated in time.",
-            "Good luck!"
+            "Good luck!",
         ];
+
         let instructionText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, instructions[0], {
             fontSize: '24px',
             fill: '#fff',
@@ -51,10 +51,6 @@ export default class Instruction2Scene extends Phaser.Scene {
             fill: '#fff',
             backgroundColor: '#000'
         });
-        skipButton.setOrigin(1, 1);
-        skipButton.setInteractive();
-        skipButton.on('pointerdown', () => {
-            this.scene.start('Level1Scene');
-        });
+        
     }
 }

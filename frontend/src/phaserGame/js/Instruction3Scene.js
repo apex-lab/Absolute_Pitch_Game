@@ -15,11 +15,12 @@ export default class Instruction3Scene extends Phaser.Scene {
         background.setOrigin(0, 0);
         
         const instructions = [
-           "Congratulations! You have completed the second phase",
-            "You will now begin Phase 3. \n\n",
-            "This phase will consist of aliens from the previous 2 phases \n\n The aliens will appear from their respective ports of prior phases \n\n",
-            "Depedning on which phase the alien appeared in you will shoot with either the W or E key",
-            "Remember, the faster that you shoot the alien the more points you will get \n\n ",
+           "Congratulations! You have completed Phase 2. \n\n",
+            "Welcome to Phase 3. \n\n",
+            "In this phase, you will face all alien types previously encountered in Phases 1 and 2. \n\n Each alien will continue to emerge from its designated port as before. \n\n",
+            "Use the correct key — W or E — to fire the corresponding bullet and eliminate the aliens before they attack.\n\n",
+            "Correct key = successful hit.\n\n Incorrect key = penalty of -10 points. \n\n ",
+            "If an alien is not eliminated in time, it will attack. You must reach the required point threshold to complete the level. \n\n Failing to meet this target will result in a level restart. \n\n",
             "Aliens will attack if not defeated in time.",
             "Good luck!"
         ];
@@ -32,7 +33,7 @@ export default class Instruction3Scene extends Phaser.Scene {
         instructionText.setOrigin(0.5, 0.5);
 
         let currentIndex = 0;
-        const changeInterval = 5000;
+        const changeInterval = 6000;
 
         this.time.addEvent({
             delay: changeInterval,
@@ -50,11 +51,6 @@ export default class Instruction3Scene extends Phaser.Scene {
             fontSize: '20px',
             fill: '#fff',
             backgroundColor: '#000'
-        });
-        skipButton.setOrigin(1, 1);
-        skipButton.setInteractive();
-        skipButton.on('pointerdown', () => {
-            this.scene.start('Level11Scene');
         });
     }
 }

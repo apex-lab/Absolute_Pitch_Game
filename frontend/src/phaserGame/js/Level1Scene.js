@@ -2,8 +2,7 @@ import Phaser from 'phaser';
 import axiosInstance from './api'
 import { preloadAssets } from './Preload';
 import { createAssets } from './create';
-import {enemyShoot, playerHit,updateAssets, enemyHit, spawnEnemy,checkForNextLevel,generateBalancedQueue} from './gameutils.js'
-import ScoreManager from './ScoreTracker'
+import {enemyShoot, playerHit,updateAssets, enemyHit, spawnEnemy,generateBalancedQueue,handleLevelCompletion, onEvent} from './gameutils.js'
 
 export default class Level1Scene extends Phaser.Scene {
     constructor() {
@@ -54,6 +53,8 @@ startLevel() {
     };
     this.currentQueue = [...this.levelQueues.level1];
 
+    this.onEvent = onEvent.bind(this);
+    
     if (this.timedEvent) {
         this.timedEvent.remove();
     }
@@ -63,9 +64,8 @@ startLevel() {
         callback: this.onEvent,
         callbackScope: this,
         loop: true
-    });
-}
-    
+        });
+    }
     update(time,delta) {
         if (!this.levelStarted) return; 
         updateAssets(this,time, delta)
@@ -79,75 +79,9 @@ startLevel() {
     enemyShoot(enemy) {
         enemyShoot(this,enemy)
     }
-
-    onEvent() {
-    this.checkForNextLevel();
-    if (!this.currentQueue || this.currentQueue.length === 0) return;
-
-    if (!this.canSpawn) return;  
-    this.canSpawn = false;
-
-    const nextEnemy = this.currentQueue.shift();
-    spawnEnemy(this, nextEnemy, this.speed).then(() => {
-        this.canSpawn = true;
-        if (!this.scene,!this.sys || !this.sys.isActive()) return;
-        this.time.delayedCall(500, () => this.onEvent());
-    });
        
-}
 
-    async checkForNextLevel (retries = 5, delay = 300) {
-        const score = ScoreManager.getScore();
-
-        if (score >= this.levelUpThreshold) {
-            const completionTime = Math.floor((Date.now() - this.levelStartTime) / 1000);
-            const token = localStorage.getItem("authToken");
-            if (!token && retries > 0) {
-                console.warn("Token missing. Retrying...");
-                this.time.delayedCall(delay, () => {
-                    this.checkForNextLevel(retries - 1, delay);
-                });
-                return;
-            }
-    
-            if (!token) {
-                console.error("Auth token still missing after retries.");
-                return;
-            }
-
-            console.log("sending level data:", {
-                levelNumber: 1,
-                completionTime: completionTime,
-                score: score,
-                enemiesKilled: this.enemyCount,
-                killData: this.killData
-            });
-
-            try {
-                const response = await axiosInstance.post("http://localhost:3000/api/level/save", 
-                    {
-                        levelNumber: 1,
-                        completionTime: completionTime,
-                        score: score,
-                        enemiesKilled: this.enemyCount,
-                        killData: this.killData
-                    },
-                    {
-                        headers: {
-                            Authorization: `${token}`
-                        }
-                    }
-                );
-                console.log("Progress saved:", response.data);
-
-            } catch (err) {
-                console.error("Error saving progress:", err);
-            } 
-            checkForNextLevel(this);
-            this.time.delayedCall(1000, () => {
-                this.scene.start('Level2Scene'); 
-            });
-            
-        }
+    async checkForNextLevel() {
+        await handleLevelCompletion(this, 'Level2Scene', 1); 
     }
 }

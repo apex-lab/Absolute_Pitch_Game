@@ -16,10 +16,10 @@ export default class InstructionScene extends Phaser.Scene {
         
         const instructions = [
             "Thank you for participating in our experiment",
-            "You will now begin Phase 1. \n\n To rotate the ship use the mouse pad. \n\n To shoot press the W key.",
-            "The aliens will come from different ports on the screen \n\n and each alien corresponds to a unique note. \n\n Before the alein comes on screen a sequence of octaves consisting of \n\n the same note will play.",
-            "The faster that you shoot the alien the more points you will get \n\n ",
-            "Aliens will attack if not defeated in time.",
+            "You will now begin Phase 1. \n\n " ,
+            "Controls \n \n Use the Left and Right arrow keys to ratate the ship. \n\n Press the W key to shoot.",
+            "Aliens will appear from various positions (ports) on the screen \n\n and each alien is associated with a unique note. \n\n","Before the alein comes on screen a sequence of octaves based on that note will play as an audio cue \n\n",
+            "If not destroyed in time, the alien will attack. \n\n",
             "Good luck!"
         ];
         let instructionText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY, instructions[0], {
@@ -49,11 +49,6 @@ export default class InstructionScene extends Phaser.Scene {
             fontSize: '20px',
             fill: '#fff',
             backgroundColor: '#000'
-        });
-        skipButton.setOrigin(1, 1);
-        skipButton.setInteractive();
-        skipButton.on('pointerdown', () => {
-            this.scene.start('Level1Scene');
         });
     }
 }

@@ -1,10 +1,9 @@
 import Phaser from 'phaser';
 import ScoreManager from './ScoreTracker.js';
-import axios from 'axios';
+import axiosInstance from './api'
 
 //Function to update player key presses and movement
 export function updateAssets(scene,time, delta) { 
-   
     const ROTATION_STEP = Phaser.Math.DegToRad(30);
     const { left, right } = scene.cursors;
     const state = scene.rotationState;
@@ -47,7 +46,7 @@ export function updateAssets(scene,time, delta) {
     }
 }
 
-export function fireProjectile(scene, time, group, type) {
+export function fireProjectile(scene, time, group, type){
     if (time - scene.lastFireTime > scene.fireRate) {
         const projectile = group.get();
         if (projectile) {
@@ -59,7 +58,7 @@ export function fireProjectile(scene, time, group, type) {
     }
 }
 
-export function enemyShoot(scene,enemy) { 
+export function enemyShoot(scene,enemy){ 
     if (!scene.scene.isActive()) return;
     if (!scene.player || !scene.player.active) return;
     let bullet = scene.enemyBullets.get();
@@ -74,6 +73,9 @@ export function enemyShoot(scene,enemy) {
 }
 
 export function enemyHit(scene, projectile, enemy) {
+    if (!enemy.collision) { 
+        return;
+    }
     const type = projectile?.type ?? 'unknown';
     const category = enemy.category ?? 'unknown';
 
@@ -108,6 +110,7 @@ export function enemyHit(scene, projectile, enemy) {
 }
 
 export function spawnEnemy(scene, enemyKey, speed) {
+
     return new Promise((resolve) => {
         const def = scene.enemyTemplates[enemyKey];
         const port = scene.ports[def.port];
@@ -133,6 +136,7 @@ export function spawnEnemy(scene, enemyKey, speed) {
         const sound = scene.sound.add(soundKey);
 
         tones.play();
+        enemy.collision = false;
         scene.time.delayedCall(3000, () => {
             if (!scene.sys.isActive() || !scene.player.active) {
             return;
@@ -145,11 +149,25 @@ export function spawnEnemy(scene, enemyKey, speed) {
                 scene.time.delayedCall(1000, () => {
                     scene.physics.moveToObject(enemy, scene.player, speed);
                     enemy.setVisible(true).setActive(true);
+                    enemy.collision = true;
                     scene.enemyTimers[enemy] = scene.time.delayedCall(2000, () => scene.enemyShoot(enemy));
                     resolve();  
                 });
             });
         });
+    });
+}
+export function onEvent() {
+    if (!this.currentQueue || this.currentQueue.length === 0) return;
+    if (!this.canSpawn) return;
+
+    this.canSpawn = false;
+
+    const nextEnemy = this.currentQueue.shift();
+    spawnEnemy(this, nextEnemy, this.speed).then(() => {
+        this.canSpawn = true;
+        if (!this.scene || !this.sys || !this.sys.isActive()) return;
+        this.time.delayedCall(500, () => onEvent.call(this)); // 
     });
 }
 
@@ -209,7 +227,7 @@ export function playerHit(scene, bullet, player) {
         });
     });
 }
-// Potential problems with this function
+
 export function cleanupScene(scene) {
     scene.sound.stopAll();
     for (let timer in scene.enemyTimers) {
@@ -227,37 +245,58 @@ export function cleanupScene(scene) {
     scene.timedEvent.remove(true);
 }
 
-export function checkForNextLevel (scene) {
-        cleanupScene(scene);
-        ScoreManager.setPreviousScore();
-        scene.player.destroy()
+export function checkForNextLevel(scene) {
+    cleanupScene(scene);
+    ScoreManager.setPreviousScore();
     
+    if (scene.player) {
+        scene.player.destroy();
+    }
 
-        let completeText = scene.add.text(scene.cameras.main.centerX, scene.cameras.main.centerY, 'Level Complete!', {
+    const completeText = scene.add.text(
+        scene.cameras.main.centerX,
+        scene.cameras.main.centerY,
+        'Level Complete!',
+        {
             fontSize: '40px',
-            fill: '#fff'
-        });
-        completeText.setOrigin(0.5, 0.5)
-    
+            fill: '#fff',
+        }
+    );
+    completeText.setOrigin(0.5);
 }
 
-// export async function refreshAuthToken() {
-//     const refreshToken = localStorage.getItem('refreshToken');
-//     if (!refreshToken) {
-//         console.error('No refresh token available.');
-//         return null;
-//     }
+export async function handleLevelCompletion(scene, nextSceneName, levelNumber) {
+    const score = ScoreManager.getScore();
+    if (score >= scene.levelUpThreshold) {
+        const completionTime = Math.floor((Date.now() - scene.levelStartTime) / 1000);
+        const token = localStorage.getItem("authToken");
 
-//     try {
-//         const response = await axios.post('http://localhost:3000/api/users/refresh', {
-//             refreshToken
-//         });
+        if (!token) {
+            console.error("Auth token missing - cannot save progress.");
+            return;
+        }
 
-//         const newAccessToken = response.data.accessToken;
-//         localStorage.setItem('authToken', newAccessToken); // Update the access token
-//         return newAccessToken;
-//     } catch (err) {
-//         console.error('Failed to refresh auth token:', err.response?.data || err.message);
-//         return null;
-//     }
-// }
+        const payload = {
+            levelNumber,
+            completionTime,
+            score,
+            enemiesKilled: scene.enemyCount,
+            killData: scene.killData
+        };
+
+        try {
+            const response = await axiosInstance.post("http://localhost:5000/api/level/save", payload, {
+                headers: { Authorization: token }
+            });
+            console.log("Progress saved:", response.data);
+        } catch (err) {
+            console.error("Error saving progress:", err);
+        }
+
+        checkForNextLevel(scene); 
+
+        scene.time.delayedCall(1000, () => {
+            scene.scene.start(nextSceneName);
+        });
+    }
+}

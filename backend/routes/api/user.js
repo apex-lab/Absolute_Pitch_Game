@@ -25,14 +25,25 @@ router.post("/register", (req, res) => {
           name: req.body.name,
           password: req.body.password
         });
-  // Hash password before saving in database
+  // Hashing password before saving in database
         bcrypt.genSalt(10, (err, salt) => {
           bcrypt.hash(newUser.password, salt, (err, hash) => {
             if (err) throw err;
             newUser.password = hash;
             newUser
               .save()
-              .then(user => res.json(user))
+              .then(user => {
+                const payload = { id: user.id, name: user.name };
+                jwt.sign(payload,keys.secretOrKey,{ expiresIn: 31556926 },(err, token) => {
+                    if (err) throw err;
+                    res.json({
+                      success: true,
+                      token: "Bearer " + token,
+                      currentLevel: user.currentLevel
+                    });
+                  }
+                );
+              })
               .catch(err => console.log(err));
           });
         });
@@ -46,12 +57,12 @@ router.post("/register", (req, res) => {
 router.post("/login", (req, res) => {
     // Form validation
   const { errors, isValid } = validateLoginInput(req.body);
-  // Check validation
+  //validation
     if (!isValid) {
       return res.status(400).json(errors);
     }
   const name = req.body.name;
-    const password = req.body.password;
+  const password = req.body.password;
   // Find user by name
     User.findOne({ name }).then(user => {
       // Check if user exists
@@ -68,13 +79,7 @@ router.post("/login", (req, res) => {
             name: user.name
           };
   // Sign token
-          jwt.sign(
-            payload,
-            keys.secretOrKey,
-            {
-              expiresIn: 31556926 // 1 year in seconds
-            },
-            (err, token) => {
+          jwt.sign(payload, keys.secretOrKey, {expiresIn: 31556926 },(err, token) => {
               res.json({
                 success: true,
                 token: "Bearer " + token,
@@ -83,9 +88,7 @@ router.post("/login", (req, res) => {
             }
           );
         } else {
-          return res
-            .status(400)
-            .json({ passwordincorrect: "Password incorrect" });
+          return res.status(400).json({ passwordincorrect: "Password incorrect" });
         }
       });
     });

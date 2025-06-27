@@ -2,16 +2,6 @@ import Projectile from './projectile';
 import ScoreManager from './ScoreTracker';
 import Phaser from 'phaser';
 import {enemyHit } from './gameutils.js';
-//Side Annotations 
-    // Bottom Left - 1 
-    // Middle Left - 2
-    // Top Left - 3 
-    // Top Right - 4 
-    // Middle Right - 5
-    // Bottom Right - 6
-
-    // Get the width and height of the camera view
- 
 
 export function createAssets(scene) {
     const camera = scene.cameras.main ;
@@ -78,8 +68,8 @@ export function createAssets(scene) {
     rightHeldTime: 0,
     lastLeftRotation: 0,
     lastRightRotation: 0,
-    delay: 200,    // ms before repeat starts
-    interval: 150  // ms between repeats
+    delay: 200,    
+    interval: 150  
     };
     
     scene.anims.create({
@@ -88,7 +78,6 @@ export function createAssets(scene) {
             { key: 'explosion1' },
             { key: 'explosion2' },
             { key: 'explosion3' },
-            { key: 'explosion4' }
         ],
         frameRate: 8,
         repeat: 0,

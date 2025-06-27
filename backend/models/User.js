@@ -12,7 +12,6 @@ const levelSchema = new Schema({
   levelNumber: { type: Number, required: true },
   completionTime: { type: Number, required: true }, 
   score: { type: Number, required: true },
-  enemiesKilled: { type: Number, required: true },
   killData: [killSchema],
 });
 

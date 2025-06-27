@@ -1,8 +1,7 @@
 import Phaser from 'phaser';
-import axiosInstance from './api'
 import { preloadAssets } from './Preload';
 import { createAssets } from './create';
-import {enemyShoot, playerHit,updateAssets, enemyHit, spawnEnemy,generateBalancedQueue,handleLevelCompletion, onEvent} from './gameutils.js'
+import {enemyShoot, playerHit,updateAssets, enemyHit,onEvent,generateBalancedQueue,handleLevelCompletion} from './gameutils.js'
 
 export default class Level1Scene extends Phaser.Scene {
     constructor() {

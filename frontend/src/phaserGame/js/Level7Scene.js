@@ -1,9 +1,7 @@
 import Phaser from 'phaser';
-import axiosInstance from './api'
 import { preloadAssets } from './Preload';
 import { createAssets } from './create';
-import {enemyShoot, playerHit,updateAssets, enemyHit, spawnEnemy,checkForNextLevel,generateBalancedQueue,handleLevelCompletion} from './gameutils.js'
-import ScoreManager from './ScoreTracker'
+import {enemyShoot, playerHit,updateAssets, enemyHit,onEvent,generateBalancedQueue,handleLevelCompletion} from './gameutils.js'
 
 export default class Level7Scene extends Phaser.Scene {
     constructor() {
@@ -45,8 +43,29 @@ export default class Level7Scene extends Phaser.Scene {
 
     startLevel() {
         this.levelStarted = true;
+        this.levelStartTime = Date.now();
+        this.killData = []; 
+        this.enemyCount = 0; 
         createAssets(this);
 
+        this.enemyTypes = ['MagentaFriendly', 'PinkFriendly','AquaFriendly'];
+            this.levelQueues = {
+                level7: generateBalancedQueue(this.enemyTypes, 21, 7),
+            };
+            this.currentQueue = [...this.levelQueues.level7];
+
+            this.onEvent = onEvent.bind(this);
+    
+            if (this.timedEvent) {
+                this.timedEvent.remove();
+            }
+    
+            this.timedEvent = this.time.addEvent({
+                delay: 4000,
+                callback: this.onEvent,
+                callbackScope: this,
+                loop: true
+        });
     }
     update(time,delta) {
         if (!this.levelStarted) return; 
@@ -61,30 +80,7 @@ export default class Level7Scene extends Phaser.Scene {
     enemyShoot(enemy) {
         enemyShoot(this,enemy)
     }
-    startLevel() {
-        this.levelStarted = true;
-        this.levelStartTime = Date.now();
-        this.killData = []; 
-        this.enemyCount = 0; 
-        createAssets(this);
-
-        this.enemyTypes = ['MagentaFriendly', 'PinkFriendly','AquaFriendly'];
-            this.levelQueues = {
-                level7: generateBalancedQueue(this.enemyTypes, 21, 7),
-            };
-            this.currentQueue = [...this.levelQueues.level7];
     
-            if (this.timedEvent) {
-                this.timedEvent.remove();
-            }
-    
-            this.timedEvent = this.time.addEvent({
-                delay: 4000,
-                callback: this.onEvent,
-                callbackScope: this,
-                loop: true
-        });
-    }
 
     async checkForNextLevel() {
         await handleLevelCompletion(this, 'Level8Scene', 6); 

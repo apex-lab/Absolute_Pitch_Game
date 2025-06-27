@@ -1,8 +1,7 @@
 import Phaser from 'phaser';
-import axiosInstance from './api'
 import { preloadAssets } from './Preload';
 import { createAssets } from './create';
-import {enemyShoot, playerHit,updateAssets, enemyHit, spawnEnemy,checkForNextLevel,generateBalancedQueue,handleLevelCompletion} from './gameutils.js'
+import {enemyShoot, playerHit,updateAssets, enemyHit,onEvent,generateBalancedQueue,handleLevelCompletion} from './gameutils.js'
 export default class Level8Scene extends Phaser.Scene {
     constructor() {
         super({ key: 'Level8Scene' });
@@ -55,10 +54,13 @@ export default class Level8Scene extends Phaser.Scene {
                     level8: generateBalancedQueue(this.enemyTypes, 28, 7),
                 };
                 this.currentQueue = [...this.levelQueues.level8];
-        
+                
+                this.onEvent = onEvent.bind(this);
+
                 if (this.timedEvent) {
                     this.timedEvent.remove();
                 }
+
         
                 this.timedEvent = this.time.addEvent({
                     delay: 4000,
@@ -79,21 +81,6 @@ export default class Level8Scene extends Phaser.Scene {
     }
     enemyShoot(enemy) {
         enemyShoot(this,enemy)
-    }
-
-    onEvent() {
-        this.checkForNextLevel(); 
-        if (!this.currentQueue || this.currentQueue.length === 0) return;
-
-        if (!this.canSpawn) return;  
-        this.canSpawn = false;
-
-        const nextEnemy = this.currentQueue.shift();
-        spawnEnemy(this, nextEnemy, this.speed).then(() => {
-            this.canSpawn = true;
-            if (!this.scene,!this.sys || !this.sys.isActive()) return;
-            this.time.delayedCall(500, () => this.onEvent());
-        });
     }
 
     async checkForNextLevel() {

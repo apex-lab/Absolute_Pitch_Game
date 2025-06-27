@@ -1,8 +1,4 @@
-// This will be the main game file
-// Currently all scenes are on this file, but will change later 
-// so that each scene is its own file for readablity. 
-// Title Scene
-// Need to add option for username input
+//Main game file
 import Phaser from 'phaser';
 import TitleScene from './TitleScene';
 import InstructionScene from './InstructionScene';

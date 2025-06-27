@@ -47,10 +47,5 @@ export default class Instruction3Scene extends Phaser.Scene {
             },
             loop: true
         });
-        let skipButton = this.add.text(this.cameras.main.width - 20, this.cameras.main.height - 20, 'Skip', {
-            fontSize: '20px',
-            fill: '#fff',
-            backgroundColor: '#000'
-        });
     }
 }

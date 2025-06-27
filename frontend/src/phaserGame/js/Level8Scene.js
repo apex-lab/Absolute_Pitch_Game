@@ -1,29 +1,26 @@
 import Phaser from 'phaser';
-import axios from 'axios';
-import { preloadAssets } from './Preload.js';
-import { createAssets } from './create.js';
-import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel} from './gameutils.js'
-import ScoreManager from './ScoreTracker'
-
+import { preloadAssets } from './Preload';
+import { createAssets } from './create';
+import {enemyShoot, playerHit,updateAssets, enemyHit,onEvent,generateBalancedQueue,handleLevelCompletion} from './gameutils.js'
 export default class Level8Scene extends Phaser.Scene {
     constructor() {
         super({ key: 'Level8Scene' });
-        this.mouseX = 0;
-        this.mouseY = 0;
-        this.enemyTimers = {};
-        this.enemyCount = 0;
-        this.lastFireTime = 0;
-        this.fireRate = 200;
-        this.canShoot = false; 
-        this.canSnare = true;
-        this.speed = 300;
-        this.levelUpThreshold = 1060;
+       
     }
     preload() {
         preloadAssets(this);
     }
     create() {
         this.levelStarted = false;
+        this.levelStarted = false;
+        this.fireRate = 200;
+        this.bullet2 = true;
+        this.bullet1 = false;
+        this.lastFireTime = 0;
+        this.enemyTimers = {};
+        this.speed = 300;
+        this.levelUpThreshold = 630;
+        this.canSpawn = true;
 
         this.load.image('space', 'assets/space.png');
         let background = this.add.sprite(0, 0, 'space');
@@ -39,7 +36,6 @@ export default class Level8Scene extends Phaser.Scene {
             }
         ).setOrigin(0.5);
 
-        // After a delay, destroy the text and start the level
         this.time.delayedCall(2000, () => {
             levelText.destroy();
             this.startLevel(); 
@@ -48,9 +44,31 @@ export default class Level8Scene extends Phaser.Scene {
 
     startLevel() {
         this.levelStarted = true;
+        this.levelStartTime = Date.now();
+        this.killData = []; 
+        this.enemyCount = 0; 
         createAssets(this);
 
-    }
+        this.enemyTypes = ['MagentaFriendly', 'PinkFriendly','AquaFriendly','LightPurpleFriendly'];
+                this.levelQueues = {
+                    level8: generateBalancedQueue(this.enemyTypes, 28, 7),
+                };
+                this.currentQueue = [...this.levelQueues.level8];
+                
+                this.onEvent = onEvent.bind(this);
+
+                if (this.timedEvent) {
+                    this.timedEvent.remove();
+                }
+
+        
+                this.timedEvent = this.time.addEvent({
+                    delay: 4000,
+                    callback: this.onEvent,
+                    callbackScope: this,
+                    loop: true
+            });
+        }
     update(time,delta) {
         if (!this.levelStarted) return; 
         updateAssets(this,time, delta)
@@ -58,105 +76,14 @@ export default class Level8Scene extends Phaser.Scene {
     playerHit(bullet, player) {
         playerHit(this, bullet, player)
     }
-    CaptureEnemy(capture, bullet, enemy) {
-        captureEnemy(this, capture,bullet,enemy);
+    enemyHit(projectile, enemy) {
+        enemyHit(this, projectile,enemy);
     }
     enemyShoot(enemy) {
         enemyShoot(this,enemy)
     }
-    onEvent() {
-        this.checkForNextLevel(); // Check if conditions to move to the next level are met
-        let side = Phaser.Math.Between(1,4);
-        let new_side;
-        do { 
-            new_side = Phaser.Math.Between(1,4); 
-        } while (new_side === side); 
-        side = new_side; 
-        switch (side) {
-            case 1:
-                this.spawnEnemy(this.MagentaFriendly, 100, this.ShootDelay);
-                break;
-            case 2: 
-                this.spawnEnemy(this.PinkFriendly, 100, this.ShootDelay);
-                break;
-            case 3: 
-                this.spawnEnemy(this.AquaFriendly, 100, this.ShootDelay);
-                break;
-            case 4:
-                this.spawnEnemy(this.LightPurpleFriendly, 100, this.ShootDelay); 
-                break;
-            default:
-                console.log("Unexpected side value:", side); 
-                break;
-        }
-        this.enemyCount++;
-    }
 
-    spawnEnemy(enemy, speed, shootDelay) {
-        const randIndex = Phaser.Math.Between(0, 6);
-        //Adding unique chromatic scale to each enemy
-        switch(enemy.texture.key){
-            case 'MagentaFriendly':
-                console.log("Playing sound:", this.MagentaFriendlySounds[randIndex].key);
-                this.MagentaFriendlySounds[randIndex].play();
-                break;
-            case 'PinkFriendly':
-                console.log("Playing sound:", this.PinkFriendlySounds[randIndex].key);
-                this.PinkFriendlySounds[randIndex].play();
-                break;
-            case 'AquaFriendly': 
-                console.log("Playing sound:", this.AquaFriendlySounds[randIndex].key);
-                this.AquaFriendlySounds[randIndex].play();
-                break; 
-            case 'LightPurpleFriendly': 
-                this.LightPurpleFriendlySounds[randIndex].play();
-                break;
-            default: 
-                console.log("Unexpected enemy value")
-                break;
-        }
-        spawnEnemy (this,enemy,this.speed,shootDelay);
-    }
-
-    async checkForNextLevel () {
-        const score = ScoreManager.getScore();
-
-        if (score >= this.levelUpThreshold) {
-            const completionTime = Math.floor((Date.now() - this.levelStartTime) / 1000);
-            const token = localStorage.getItem("authToken");
-
-            console.log("sending level data:", {
-                levelNumber: 1,
-                completionTime: completionTime,
-                score: score,
-                enemiesKilled: this.enemyCount,
-                killData: this.killData
-            });
-            try {
-                const response = await axios.post("http://localhost:3000/api/level/save", 
-                    {
-                        levelNumber: 8,
-                        completionTime: completionTime,
-                        score: score,
-                        enemiesKilled: this.enemyCount,
-                        killData: this.killData
-                    },
-                    {
-                        headers: {
-                            Authorization: `${token}`
-                        }
-                    }
-                );
-                console.log("Progress saved:", response.data);
-              
-            } catch (err) {
-                console.error("Error saving progress:", err);
-            }
-            this.time.delayedCall(2000, () => {
-                this.scene.start('Level9Scene'); 
-            });
-            checkForNextLevel(this);
-           
-        }
+    async checkForNextLevel() {
+        await handleLevelCompletion(this, 'Level9Scene', 8); 
     }
 }

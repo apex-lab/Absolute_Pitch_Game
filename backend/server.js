@@ -16,7 +16,7 @@ const port = process.env.PORT || 8000;
 app.use(cors());
 app.use(cors({
     origin: 'https://absolute-pitch-game-glsd.onrender.com', 
-    // origin: 'http://localhost:3000', 
+    //origin: 'http://localhost:3000', 
     credentials: true
   }));
 app.use(express.json());

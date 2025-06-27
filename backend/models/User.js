@@ -4,15 +4,14 @@ const Schema = mongoose.Schema;
 // Track each enemy kill with its timestamp
 const killSchema = new Schema({
   enemyId: { type: String, required: true },
-  killTime: { type: Number, required: true } // Use Date for easier timestamp handling
-});
+  killTime: { type: Number, required: true } 
+}, { _id: false });
 
 // One record per level completed
 const levelSchema = new Schema({
   levelNumber: { type: Number, required: true },
-  completionTime: { type: Number, required: true }, // seconds
+  completionTime: { type: Number, required: true }, 
   score: { type: Number, required: true },
-  enemiesKilled: { type: Number, required: true },
   killData: [killSchema],
 });
 

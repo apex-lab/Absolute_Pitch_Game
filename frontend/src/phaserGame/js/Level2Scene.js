@@ -1,30 +1,26 @@
 import Phaser from 'phaser';
-import axios from 'axios';
-import { preloadAssets } from './Preload.js';
-import { createAssets } from './create.js';
-import {enemyShoot,playerHit,updateAssets, captureEnemy, spawnEnemy,checkForNextLevel} from './gameutils.js'
-import ScoreManager from './ScoreTracker'
+import { preloadAssets } from './Preload';
+import { createAssets } from './create';
+import {enemyShoot, playerHit,updateAssets, enemyHit,onEvent,generateBalancedQueue,handleLevelCompletion} from './gameutils.js'
 
-//We will add the capturing mechanism on this level
 export default class Level2Scene extends Phaser.Scene {
     constructor() {
-        super({ key: 'Level2Scene' });
-        this.mouseX = 0;
-        this.mouseY = 0;
-        this.enemyTimers = {};
-        this.enemyCount = 0;
-        this.lastFireTime = 0;
-        this.fireRate = 200; 
-        this.canSnare = false; 
-        this.canShoot = true; 
-        this.speed = 300;
-        this.levelUpThreshold = 270
+        super({ key: 'Level2Scene' });    
     }
     preload() {
         preloadAssets(this);
     }
     create() {
         this.levelStarted = false;
+        this.fireRate = 200;
+        this.bullet2 = false;
+        this.bullet1 = true;
+        this.lastFireTime = 0;
+        this.enemyTimers = {};
+        this.speed = 300;
+        this.levelUpThreshold = 210
+        this.canSpawn = true;
+
         this.load.image('space', 'assets/space.png');
         let background = this.add.sprite(0, 0, 'space');
         background.setOrigin(0,0)
@@ -39,10 +35,9 @@ export default class Level2Scene extends Phaser.Scene {
             }
         ).setOrigin(0.5);
 
-        // After a delay, destroy the text and start the level
         this.time.delayedCall(2000, () => {
             levelText.destroy();
-            this.startLevel(); // Now start the level
+            this.startLevel(); 
         });
     }
 
@@ -51,7 +46,26 @@ export default class Level2Scene extends Phaser.Scene {
         this.levelStartTime = Date.now();
         this.killData = []; 
         this.enemyCount = 0; 
+
         createAssets(this);
+
+        this.enemyTypes = ['LightBlueEnemy', 'OrangeEnemy', 'BlueEnemy'];
+        this.levelQueues = {
+            level2: generateBalancedQueue(this.enemyTypes, 21, 7),
+        };
+        this.currentQueue = [...this.levelQueues.level2];
+        this.onEvent = onEvent.bind(this);
+         
+        if (this.timedEvent) {
+            this.timedEvent.remove();
+        }
+
+        this.timedEvent = this.time.addEvent({
+            delay: 4000,
+            callback: this.onEvent,
+            callbackScope: this,
+            loop: true
+        });
     }
     
     update(time,delta) {
@@ -61,98 +75,15 @@ export default class Level2Scene extends Phaser.Scene {
     playerHit(bullet, player) {
         playerHit(this, bullet, player)
     }
-    CaptureEnemy(capture, bullet, enemy) {
-        captureEnemy(this, capture,bullet,enemy);
+    enemyHit(projectile, enemy) {
+        enemyHit(this, projectile,enemy);
     }
-    enemyShoot(enemy) {
+    enemyShoot(enemy)  {
         enemyShoot(this,enemy)
     }
-    onEvent() {
-        this.checkForNextLevel(); // Check if conditions to move to the next level are met
-        
-        let side = Phaser.Math.Between(1, 3);
-        let new_side;
-        do { 
-            new_side = Phaser.Math.Between(1,3); 
-        } while (new_side === side); 
-        side = new_side;
 
-        switch (side) {
-            case 1:
-            this.spawnEnemy(this.LightBlueEnemy, 100, this.shootDelay);
-                break;
-            case 2:
-                this.spawnEnemy(this.OrangeEnemy, 100, this.shootDelay);
-                break;
-            case 3:
-                this.spawnEnemy(this.BlueEnemy, 100, this.shootDelay);
-                break;
-             default:
-                console.log("Unexpected side value:", side);
-                break;
-        }
-        this.enemyCount++;
-    }
-
-    spawnEnemy(enemy, speed, shootDelay) {
-        const randIndex = Phaser.Math.Between(0, 6);
-        switch(enemy.texture.key){
-            case 'LightBlueEnemy':
-                this.LightBlueEnemySounds[randIndex].play();
-                break;
-            case 'OrangeEnemy':
-                this.OrangeEnemySounds[randIndex].play();
-                break;
-            case 'blue-enemy': 
-                this.BlueEnemySounds[randIndex].play();
-                break;
-            default: 
-                console.log("Unexpected enemy value")
-                break;
-        }
-        spawnEnemy (this,enemy,this.speed,shootDelay);
-    }
-
-    async checkForNextLevel () {
-        const score = ScoreManager.getScore();
-
-        if (score >= this.levelUpThreshold) {
-            const completionTime = Math.floor((Date.now() - this.levelStartTime) / 1000);
-            // const token = localStorage.getItem("authToken");
-
-            // console.log("sending level data:", {
-            //     levelNumber: 2,
-            //     completionTime: completionTime,
-            //     score: score,
-            //     enemiesKilled: this.enemyCount,
-            //     killData: this.killData
-            // });
-
-            // try {
-            //     const response = await axios.post("http://localhost:3000/api/level/save", 
-            //         {
-            //             levelNumber: 1,
-            //             completionTime: completionTime,
-            //             score: score,
-            //             enemiesKilled: this.enemyCount,
-            //             killData: this.killData
-            //         },
-            //         {
-            //             headers: {
-            //                 Authorization: `${token}`
-            //             }
-            //         }
-            //     );
-            //     });
-            //     console.log("Progress saved:", response.data);
-            // } catch (err) {
-            //     console.error("Error saving progress:", err);
-            // }
-            checkForNextLevel(this);
-            this.time.delayedCall(1000, () => {
-                this.scene.start('Level3Scene'); 
-            });
-        }
+    async checkForNextLevel() {
+        await handleLevelCompletion(this, 'Level3Scene', 2); 
     }
 }
 

@@ -1,11 +1,9 @@
 import Phaser from 'phaser';
 import ScoreManager from './ScoreTracker.js';
-import axios from 'axios';
+import axiosInstance from './api'
 
 //Function to update player key presses and movement
-// This is fine do not change this
 export function updateAssets(scene,time, delta) { 
-    // Arrow keys for movement 
     const ROTATION_STEP = Phaser.Math.DegToRad(30);
     const { left, right } = scene.cursors;
     const state = scene.rotationState;
@@ -40,48 +38,32 @@ export function updateAssets(scene,time, delta) {
         state.rightHeldTime = 0;
     }
 
-    // W Key for shooting
-    if (scene.canShoot && scene.wKey.isDown) {
-         Shoot(scene,time);  
+    if (scene.bullet1 && scene.wKey.isDown) {
+        fireProjectile(scene, time, scene.projectiles, 'type1'); 
     }
-    // E Key for shooting
-    if (scene.canSnare && scene.eKey.isDown) {
-        fireSnare(scene,time);  
+    if (scene.bullet2 && scene.eKey.isDown) {
+        fireProjectile(scene, time, scene.projectiles, 'type2');  
     }
 }
 
-// I might be able to combine these two functions into one, but for now I will leave them separate
-export function Shoot(scene, time) {
+export function fireProjectile(scene, time, group, type){
     if (time - scene.lastFireTime > scene.fireRate) {
-        const bullet = scene.bullets.get();
-        if (bullet) {
-            bullet.type = 'type1';
-            const angle = scene.player.rotation - Math.PI / 2
-            bullet.fire(scene.player.x, scene.player.y, angle);
+        const projectile = group.get();
+        if (projectile) {
+            projectile.type = type;
+            const angle = scene.player.rotation - Math.PI / 2;
+            projectile.fire(scene.player.x, scene.player.y, angle);
             scene.lastFireTime = time;
         }
     }
 }
 
-// The shoot function for the second type of alien
-export function fireSnare(scene,time) { 
-    if (time - scene.lastFireTime > scene.fireRate) {
-        const capture = scene.capture.get();
-        if (capture) { 
-            capture.type = 'type2';
-             const angle = scene.player.rotation - Math.PI / 2
-            capture.fire(scene.player.x, scene.player.y, angle);
-            scene.lastFireTime = time;
-        }
-    }
-}
-
-//Problems emerge because of the following functions
-export function enemyShoot(scene,enemy) { 
+export function enemyShoot(scene,enemy){ 
     if (!scene.scene.isActive()) return;
     if (!scene.player || !scene.player.active) return;
     let bullet = scene.enemyBullets.get();
         if (bullet) {
+            bullet.shooter = enemy;
             let angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, scene.player.x, scene.player.y);
             bullet.fire(enemy.x, enemy.y, angle);
         }
@@ -90,123 +72,103 @@ export function enemyShoot(scene,enemy) {
         }
 }
 
-
-export function enemyHit(scene, bullet, enemy) {
-    bullet.destroy();
+export function enemyHit(scene, projectile, enemy) {
+    if (!enemy.collision) { 
+        return;
+    }
+    const type = projectile?.type ?? 'unknown';
+    const category = enemy.category ?? 'unknown';
 
     if (scene.enemyTimers[enemy]) {
         scene.enemyTimers[enemy].remove();
         delete scene.enemyTimers[enemy];
     }
-    scene.enemies.remove(enemy, true, true);
+
+    if (category === 'E2') {
+        ScoreManager.addPoints(type === 'type2' ? 10 : -10);
+    } else if (category === 'E1') {
+        ScoreManager.addPoints(type === 'type1' ? 10 : -10);
+    } else {
+        ScoreManager.addPoints(10);
+    }
+
+    scene.player.setRotation(0);
+    projectile?.destroy();
 
     const timeSinceStart = Math.floor((Date.now() - scene.levelStartTime) / 1000);
     scene.killData.push({
-    enemyId: enemy.texture.key,
-    killTime: timeSinceStart
+        enemyId: enemy.texture.key,
+        killTime: timeSinceStart
     });
-    enemy.destroy();
-    
-    ScoreManager.addPoints(10);
+
+    if (enemy.active) {
+        scene.enemies.remove(enemy, true, true); 
+        enemy.destroy();
+    }
     updateScoreDisplay(scene);
     scene.checkForNextLevel();
 }
 
-export function captureEnemy(scene,capture,bullet,enemy){
-
-    const captureType = capture ? capture.type : (bullet ? bullet.type : 'unknown');
-    const category = enemy.category ?? 'unknown';
-    if (scene.enemyTimers[enemy]) {
-        scene.enemyTimers[enemy].remove();
-        delete scene.enemyTimers[enemy];
-    }
-
-   console.log("enemy.category:", enemy.category);
-    scene.enemies.remove(enemy, true, true);
-    console.log("About to update score");
-    console.log("Enemy:", enemy.texture.key);
-    console.log("Score before:", ScoreManager.getScore?.());
-
-    // Checking projectile and category of enemy. This will be updated in the 
-    // future to vary in point deduction and granting. 
-    if (category === 'E2') {
-        if (captureType === 'type2') {
-            ScoreManager.addPoints(10);
-        } else if (captureType === 'type1') {
-            ScoreManager.addPoints(-10);
-        }
-    } else if (category === 'E1') {
-        if (captureType === 'type2') {
-            ScoreManager.addPoints(-10);
-        } else if (captureType === 'type1') {
-            ScoreManager.addPoints(10); 
-        }
-    }
-     console.log("Score after:", ScoreManager.getScore?.());
-    //Checking which projectile was fired and destorying it once determined
-    if (bullet) { 
-        bullet.destroy();
-    } else { 
-        capture.destroy();
-    }
-
-    const timeSinceStart = Math.floor((Date.now() - scene.levelStartTime) / 1000);
-    scene.killData.push({
-    enemyId: enemy.texture.key,
-    killTime: timeSinceStart
-    });
-        enemy.destroy(); // Destroying the enemy
-        updateScoreDisplay(scene);
-        scene.checkForNextLevel();
-    }
-
-
-//Function to spawn enemy
-//Mayor problems here
 export function spawnEnemy(scene, enemyKey, speed) {
-    const def = scene.enemyTemplates[enemyKey];
-    const port = scene.ports[def.port];
 
-    if (!def) {
-        console.error(`❌ No template found for enemyKey: "${enemyKey}"`);
-        console.log("✅ Available keys:", Object.keys(scene.enemyTemplates));
-        return;
-    }
+    return new Promise((resolve) => {
+        const def = scene.enemyTemplates[enemyKey];
+        const port = scene.ports[def.port];
+        if (!def) return resolve();
 
-    const enemy = scene.enemies.get(scene.player.x, scene.player.y, def.key);
-    if (!enemy) return;
+        const enemy = scene.enemies.get(scene.player.x, scene.player.y, def.key);
+        if (!enemy) return resolve();
 
-    enemy.setTexture(def.key);
-    enemy.setPosition(port.x, port.y);
-    enemy.setActive(true).setVisible(true);
-    enemy.category = def.category ?? 'unknown';
-    console.log("✅ Assigned category:", enemy.category);
+        enemy.setTexture(def.key);
+        enemy.setPosition(port.x, port.y);
+        enemy.category = def.category ?? 'unknown';
+        enemy.setVisible(false).setActive(false);
 
-    // Ensure physics body is enabled
-    if (!enemy.body) {
-        scene.physics.add.existing(enemy);  // fallback in case it's missing
-    } else {
-        enemy.body.enable = true;
-    }
+        if (!enemy.body) {
+            scene.physics.add.existing(enemy);
+        } else {
+            enemy.body.enable = true;
+        }
 
-    const SoundKey = Phaser.Utils.Array.GetRandom(def.soundSet);
-    const sound = scene.sound.add(SoundKey);
+        const scrambleKey = Phaser.Utils.Array.GetRandom(scene.toneScrambles);
+        const soundKey = Phaser.Utils.Array.GetRandom(def.soundSet);
+        const tones = scene.sound.add(scrambleKey);
+        const sound = scene.sound.add(soundKey);
 
-    const delay = 3500;
-    sound.play();
-    sound.once('complete', () => {
-    console.log('Sound finished');
-});
-    console.log('Scene is active:', scene.scene.isActive());
-    scene.time.delayedCall(delay, () => {
-        console.log(`Moving enemy toward player at (${scene.player.x}, ${scene.player.y})`);
-        scene.physics.moveToObject(enemy, scene.player, speed);
-
-        // Add shoot behavior after delay
-        scene.enemyTimers[enemy] = scene.time.delayedCall(2000, () => scene.enemyShoot(enemy));
+        tones.play();
+        enemy.collision = false;
+        scene.time.delayedCall(3000, () => {
+            if (!scene.sys.isActive() || !scene.player.active) {
+            return;
+        }
+            if (tones.isPlaying) {
+                tones.stop();
+            }
+            sound.play();
+            sound.once('complete', () => {
+                scene.time.delayedCall(1000, () => {
+                    scene.physics.moveToObject(enemy, scene.player, speed);
+                    enemy.setVisible(true).setActive(true);
+                    enemy.collision = true;
+                    scene.enemyTimers[enemy] = scene.time.delayedCall(2000, () => scene.enemyShoot(enemy));
+                    resolve();  
+                });
+            });
+        });
     });
+}
+export function onEvent() {
+    if (!this.currentQueue || this.currentQueue.length === 0) return;
+    if (!this.canSpawn) return;
 
-    return enemy;
+    this.canSpawn = false;
+
+    const nextEnemy = this.currentQueue.shift();
+    spawnEnemy(this, nextEnemy, this.speed).then(() => {
+        this.canSpawn = true;
+        if (!this.scene || !this.sys || !this.sys.isActive()) return;
+        this.time.delayedCall(500, () => onEvent.call(this)); // 
+    });
 }
 
 export function generateBalancedQueue(enemyTypes, totalCount, maxPerType) {
@@ -225,44 +187,27 @@ export function generateBalancedQueue(enemyTypes, totalCount, maxPerType) {
     return queue;
 }
 
-// This is fine
 export function updateScoreDisplay(scene) {
     let currentScore = ScoreManager.getScore();
     scene.scoreText.setText('Score: ' + currentScore);
 }
-
-// Potential problems with this function
-export function cleanupScene(scene) {
-    for (let timer in scene.enemyTimers) {
-        if (scene.enemyTimers.hasOwnProperty(timer)) {
-            scene.enemyTimers[timer].remove(true);
-            delete scene.enemyTimers[timer];
-        }
-    }
-
-    scene.enemySpawnTimers.forEach(timer => timer.remove(true));
-    scene.enemySpawnTimers = [];
-    scene.enemies = [];
-
-    scene.bullets.clear(true, true);
-    scene.capture.clear(true, true);
-    scene.enemyBullets.clear(true, true);
-
-    // Stop sounds
-    if (scene.sound) {
-        scene.sound.stopAll();
-    }
-}
-
 export function playerHit(scene, bullet, player) {
+    
+    if (bullet.shooter) { 
+        bullet.shooter.destroy();
+        scene.enemies.remove(bullet.shooter);
+    }
+
     bullet.destroy();
     player.destroy();
+    
 
     let explosion = scene.add.sprite(scene.player.x, scene.player.y, 'explosion1');
     explosion.setOrigin(0.5,0.5);
     explosion.setScale(5);
     explosion.play('explode');
 
+    
     let killedText = scene.add.text(scene.cameras.main.centerX, scene.cameras.main.centerY, 'Player was killed!', {
         fontSize: '50px',
         fill: '#fff'
@@ -271,7 +216,6 @@ export function playerHit(scene, bullet, player) {
 
     scene.time.delayedCall(300, () => {
         cleanupScene(scene);
-        // killedText.destroy();
 
         ScoreManager.resetScore();
         updateScoreDisplay(scene);
@@ -284,37 +228,75 @@ export function playerHit(scene, bullet, player) {
     });
 }
 
-export function checkForNextLevel (scene) {
-        cleanupScene(scene);
-        ScoreManager.setPreviousScore();
-        scene.player.destroy()
-    
+export function cleanupScene(scene) {
+    scene.sound.stopAll();
+    for (let timer in scene.enemyTimers) {
+        if (scene.enemyTimers.hasOwnProperty(timer)) {
+            scene.enemyTimers[timer].remove(true);
+            delete scene.enemyTimers[timer];
+        }
+    }
 
-        let completeText = scene.add.text(scene.cameras.main.centerX, scene.cameras.main.centerY, 'Level Complete!', {
-            fontSize: '40px',
-            fill: '#fff'
-        });
-        completeText.setOrigin(0.5, 0.5)
-    
+    scene.enemySpawnTimers.forEach(timer => timer.remove(true));
+    scene.enemySpawnTimers = [];
+    scene.enemies = [];
+    scene.enemyBullets.clear(true, true);
+    scene.projectiles.clear(true, true);
+    scene.timedEvent.remove(true);
 }
 
-// export async function refreshAuthToken() {
-//     const refreshToken = localStorage.getItem('refreshToken');
-//     if (!refreshToken) {
-//         console.error('No refresh token available.');
-//         return null;
-//     }
+export function checkForNextLevel(scene) {
+    cleanupScene(scene);
+    ScoreManager.setPreviousScore();
+    
+    if (scene.player) {
+        scene.player.destroy();
+    }
 
-//     try {
-//         const response = await axios.post('http://localhost:3000/api/users/refresh', {
-//             refreshToken
-//         });
+    const completeText = scene.add.text(
+        scene.cameras.main.centerX,
+        scene.cameras.main.centerY,
+        'Level Complete!',
+        {
+            fontSize: '40px',
+            fill: '#fff',
+        }
+    );
+    completeText.setOrigin(0.5);
+}
 
-//         const newAccessToken = response.data.accessToken;
-//         localStorage.setItem('authToken', newAccessToken); // Update the access token
-//         return newAccessToken;
-//     } catch (err) {
-//         console.error('Failed to refresh auth token:', err.response?.data || err.message);
-//         return null;
-//     }
-// }
+export async function handleLevelCompletion(scene, nextSceneName, levelNumber) {
+    const score = ScoreManager.getScore();
+    if (score >= scene.levelUpThreshold) {
+        const completionTime = Math.floor((Date.now() - scene.levelStartTime) / 1000);
+        const token = localStorage.getItem("authToken");
+
+        if (!token) {
+            console.error("Auth token missing - cannot save progress.");
+            return;
+        }
+
+        const payload = {
+            levelNumber,
+            completionTime,
+            score,
+            enemiesKilled: scene.enemyCount,
+            killData: scene.killData
+        };
+
+        try {
+            const response = await axiosInstance.post("http://localhost:5000/api/level/save", payload, {
+                headers: { Authorization: token }
+            });
+            console.log("Progress saved:", response.data);
+        } catch (err) {
+            console.error("Error saving progress:", err);
+        }
+
+        checkForNextLevel(scene); 
+
+        scene.time.delayedCall(1000, () => {
+            scene.scene.start(nextSceneName);
+        });
+    }
+}

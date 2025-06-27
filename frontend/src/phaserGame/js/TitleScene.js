@@ -85,6 +85,10 @@ export default class TitleScene extends Phaser.Scene {
                     });
 
                     console.log('Registration Success:', response.data);
+                    localStorage.setItem('authToken', response.data.token);
+                    localStorage.setItem('currentLevel', response.data.currentLevel);
+                    axios.defaults.headers.common['Authorization'] = response.data.token;
+                    console.log('Stored authToken:', localStorage.getItem('authToken'));
                     document.body.removeChild(form);
                     scene.scene.start('InstructionScene');
 
@@ -146,8 +150,8 @@ export default class TitleScene extends Phaser.Scene {
 
                     console.log('Login Success:', response.data);
                     document.body.removeChild(form);
-
                     localStorage.setItem('authToken', response.data.token);
+                    axios.defaults.headers.common['Authorization'] = response.data.token;
                     localStorage.setItem('currentLevel', response.data.currentLevel);
                     const level = response.data.currentLevel;
                     scene.scene.start(`Level${level}Scene`);

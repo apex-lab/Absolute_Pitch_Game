@@ -18,7 +18,7 @@ export default class InstructionScene extends Phaser.Scene {
             "Thank you for participating in our experiment",
             "You will now begin Phase 1. \n\n " ,
             "Controls \n \n Use the Left and Right arrow keys to ratate the ship. \n\n Press the W key to shoot.",
-            "Aliens will appear from various positions (ports) on the screen \n\n and each alien is associated with a unique note. \n\n","Before the alein comes on screen a sequence of octaves based on that note will play as an audio cue \n\n",
+            "Aliens will appear from various positions (ports) on the screen \n\n and each alien is associated with a unique note. \n\n","Before the alien comes on screen a sequence of octaves based on that note will play as an audio cue \n\n",
             "If not destroyed in time, the alien will attack. \n\n",
             "Good luck!"
         ];
